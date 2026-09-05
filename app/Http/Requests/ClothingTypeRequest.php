@@ -45,9 +45,12 @@ class ClothingTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'code'  => ['required', 'string', 'max:8',
+                Rule::unique('clothing_types', 'code')->ignore($this->id) ],
             'type'  => ['required', 'string', 'max:255',
-                Rule::unique('clients', 'code')->ignore($this->id) ],
+                Rule::unique('clothing_types', 'type')->ignore($this->id) ],
             'measurements'  => ['required', 'array', 'min:1'],
+            'base_price'  => ['nullable'],
         ];
     }
 }

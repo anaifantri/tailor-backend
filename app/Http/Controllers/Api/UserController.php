@@ -23,11 +23,11 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $fields = ['id', 'is_active', 'name', 'username', 'email', 'phone', 'email_verified_at'];
 
-        $users = $this->userService->getAll($fields);
+        $users = $this->userService->getAll($request->search, $fields);
 
         return response()->json(UserResource::collection($users));
     }

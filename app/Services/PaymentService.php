@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\PaymentRepository;
+use Exception;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
 
@@ -15,9 +16,9 @@ class PaymentService
         $this->paymentRepository = $paymentRepository;
     }
 
-    public function getAll(array $fields)
+    public function getAll(int $month, int $year, ?string $search = null, array $fields)
     {
-        return $this->paymentRepository->getAll($fields);
+        return $this->paymentRepository->getAll($month, $year, $search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)
@@ -32,6 +33,14 @@ class PaymentService
 
     public function create(array $data)
     {
+        try {
+            $orderId = (int) Crypt::decryptString($data['order_id']);
+            $userId     = (int) Crypt::decryptString($data['user_id']);
+        } catch (Exception $e) {
+            throw new Exception("Data pesanan tidak valid.");
+        }
+        $data['order_id'] = $orderId;
+        $data['user_id'] = $userId;
         return $this->paymentRepository->create($data);
     }
 

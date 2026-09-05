@@ -17,9 +17,9 @@ class MaterialService
         $this->materialRepository = $materialRepository;
     }
 
-    public function getAll(array $fields)
+    public function getAll(?string $search = null, array $fields)
     {
-        return $this->materialRepository->getAll($fields);
+        return $this->materialRepository->getAll($search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)

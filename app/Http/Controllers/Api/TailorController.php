@@ -7,6 +7,7 @@ use App\Http\Requests\TailorRequest;
 use App\Http\Resources\TailorResource;
 use App\Services\TailorService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class TailorController extends Controller
 {
@@ -17,11 +18,11 @@ class TailorController extends Controller
         $this->tailorService = $tailorService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $fields = ['id', 'code', 'specialty', 'photo', 'name', 'address', 'email', 'phone', 'is_active'];
 
-        $tailors = $this->tailorService->getAll($fields);
+        $tailors = $this->tailorService->getAll($request->search, $fields);
 
         return response()->json(TailorResource::collection($tailors));
     }

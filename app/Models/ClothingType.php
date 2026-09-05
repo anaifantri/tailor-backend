@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -11,11 +12,24 @@ class ClothingType extends Model
     protected $appends = ['hashed_id'];
     
     protected $fillable = [
+        'code',
         'type',
         'base_price'
     ];
     
     protected $hidden = ['id'];
+
+    public function scopeSearch(Builder $query, ?string $search): Builder
+    {
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+                $q->where('type', 'like', "%{$search}%")
+                ->orWhere('code', 'like', "%{$search}%");
+            });
+    }
 
     public function measurements(){
         return $this->hasMany(MeasurementDetail::class, 'clothing_type_id', 'id');

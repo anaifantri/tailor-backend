@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -21,6 +22,38 @@ class Payment extends Model
     ];
     
     protected $hidden = ['id'];
+
+    public function scopeSearch(Builder $query, ?string $search): Builder
+    {
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+                $q->where('payment_date', 'like', "%{$search}%")
+				  ->orWhere('payment_method', 'like', "%{$search}%")
+				  ->orWhere('payment_status', 'like', "%{$search}%")
+                  ->orWhereHas('order', function ($orderQuery) use ($search) {
+                      $orderQuery->where('number', 'like', "%{$search}%")
+					  ->orWhereHas('client', function ($clientQuery) use ($search) {
+						  $clientQuery->where('name', 'like', "%{$search}%")
+										->orWhere('phone', 'like', "%{$search}%")
+										->orWhere('email', 'like', "%{$search}%");
+					  });
+                  });
+            });
+    }
+
+    public function scopeByMonthYear(Builder $query, mixed $month, int $year): Builder
+    {
+        $query->whereYear('payment_date', $year);
+
+        if (!empty($month) && $month !== 'all' && (int)$month > 0) {
+            $query->whereMonth('payment_date', (int)$month);
+        }
+
+        return $query;
+    }
     
     protected function hashedId(): Attribute
     {

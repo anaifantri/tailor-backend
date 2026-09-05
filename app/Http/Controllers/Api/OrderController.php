@@ -7,6 +7,7 @@ use App\Http\Requests\OrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Services\OrderService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
@@ -17,11 +18,20 @@ class OrderController extends Controller
         $this->orderService = $orderService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $fields = ['id', 'number', 'user_id', 'client_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
 
-        $orders = $this->orderService->getAll($fields);
+        $orders = $this->orderService->getAll($request->month, $request->year, $request->search, $fields);
+
+        return response()->json(OrderResource::collection($orders));
+    }
+
+    public function unpaid(Request $request)
+    {
+        $fields = ['id', 'number', 'user_id', 'client_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
+
+        $orders = $this->orderService->getUnpaid($request->search, $fields);
 
         return response()->json(OrderResource::collection($orders));
     }
@@ -57,7 +67,7 @@ class OrderController extends Controller
         try {
             $validateData = $request->validated();
             
-            $order = $this->orderService->update($request->id, $validateData);
+            $order = $this->orderService->update($hashedId, $validateData);
             
             return response()->json(new OrderResource($order));
         } catch (ModelNotFoundException $e) {

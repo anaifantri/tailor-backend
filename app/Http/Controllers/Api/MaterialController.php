@@ -7,6 +7,7 @@ use App\Http\Requests\MaterialRequest;
 use App\Http\Resources\MaterialResource;
 use App\Services\MaterialService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class MaterialController extends Controller
 {
@@ -17,11 +18,11 @@ class MaterialController extends Controller
         $this->materialService = $materialService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $fields = ['id', 'code', 'name', 'description', 'photo', 'unit'];
 
-        $materials = $this->materialService->getAll($fields);
+        $materials = $this->materialService->getAll($request->search, $fields);
 
         return response()->json(MaterialResource::collection($materials));
     }

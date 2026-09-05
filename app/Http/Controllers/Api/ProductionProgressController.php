@@ -19,7 +19,7 @@ class ProductionProgressController extends Controller
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'status', 'notes', 'created_at'];
+            $fields = ['id', 'tailor_id', 'order_detail_id', 'status', 'notes', 'created_at'];
 
             $productionProgress = $this->productionProgressService->getByHashedId($hashedId, $fields);
 

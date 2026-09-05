@@ -6,8 +6,8 @@ use App\Models\Tailor;
 
 class TailorRepository
 {
-    public function getAll(array $fields){
-        return Tailor::select($fields)->latest()->paginate(10);
+    public function getAll(?string $search = null, array $fields){
+        return Tailor::select($fields)->search($search)->latest()->paginate(10);
     }
 
     public function getLatestByCode()

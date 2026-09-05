@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -21,6 +23,45 @@ class Order extends Model
     ];
     
     protected $hidden = ['id'];
+
+    public function scopeUnpaid(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->whereDoesntHave('payments')
+              ->orWhere('total', '>', function ($subQuery) {
+                  $subQuery->select(DB::raw('COALESCE(SUM(amount_paid), 0)'))
+                           ->from('payments')
+                           ->whereColumn('payments.order_id', 'orders.id');
+              });
+        });
+    }
+
+    public function scopeSearch(Builder $query, ?string $search): Builder
+    {
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%")
+                ->orWhereHas('client', function ($clientQuery) use ($search) {
+                    $clientQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                });
+            });
+    }
+
+    public function scopeByMonthYear(Builder $query, mixed $month, int $year): Builder
+    {
+        $query->whereYear('order_date', $year);
+
+        if (!empty($month) && $month !== 'all' && (int)$month > 0) {
+            $query->whereMonth('order_date', (int)$month);
+        }
+
+        return $query;
+    }
     
     protected function hashedId(): Attribute
     {

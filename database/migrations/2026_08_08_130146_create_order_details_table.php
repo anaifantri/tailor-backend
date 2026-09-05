@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('clothing_type_id')->constrained('clothing_types');
             $table->foreignId('material_id')->nullable()->constrained('materials')->onDelete('set null');
             $table->integer('quantity')->default(1);
+            $table->decimal('price', total: 10, places: 2)->default(0.00); 
             $table->decimal('fabric_consumed_meter', total: 5, places: 2)->default(0.00); 
             $table->text('notes')->nullable(); 
 

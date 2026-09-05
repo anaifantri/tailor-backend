@@ -15,7 +15,7 @@ class OrderDetailObserver
         ProductionProgress::create([
             'order_detail_id' => $orderDetail->id,
             'tailor_id'       => null,
-            'status'          => 'queued',
+            'status'          => 'Antrian',
             'notes'           => 'Antrean awal diisi otomatis oleh sistem.',
         ]);
     }

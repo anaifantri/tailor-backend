@@ -15,9 +15,9 @@ class ClientService
         $this->clientRepository = $clientRepository;
     }
 
-    public function getAll(array $fields)
+    public function getAll(?string $search = null, array $fields)
     {
-        return $this->clientRepository->getAll($fields);
+        return $this->clientRepository->getAll($search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)

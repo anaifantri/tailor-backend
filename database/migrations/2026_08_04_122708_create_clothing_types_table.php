@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('clothing_types', function (Blueprint $table) {
             $table->id();
 
+            $table->string('code')->unique();
             $table->string('type')->unique();
-            $table->decimal('base_price', total: 5, places: 2)->default(0.00); 
+            $table->decimal('base_price', total: 10, places: 2)->default(0.00); 
 
             $table->timestamps();
         });

@@ -7,6 +7,7 @@ use App\Http\Requests\PaymentRequest;
 use App\Http\Resources\PaymentResource;
 use App\Services\PaymentService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
@@ -17,11 +18,11 @@ class PaymentController extends Controller
         $this->paymentService = $paymentService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $fields = ['id', 'user_id', 'order_id', 'payment_date', 'amount_paid', 'payment_method', 'payment_status', 'notes', 'created_at'];
 
-        $payments = $this->paymentService->getAll($fields);
+        $payments = $this->paymentService->getAll($request->month, $request->year, $request->search, $fields);
 
         return response()->json(PaymentResource::collection($payments));
     }
@@ -59,7 +60,9 @@ class PaymentController extends Controller
             
             $payment = $this->paymentService->update($request->id, $validateData);
             
-            return response()->json(new PaymentResource($payment));
+            return response()->json(new PaymentResource([
+			'payment' => $payment,
+			'message' => 'Edit data pembayaran berhasil']));
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data pembayaran tidak ditemukan'

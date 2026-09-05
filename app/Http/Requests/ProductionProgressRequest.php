@@ -45,7 +45,7 @@ class ProductionProgressRequest extends FormRequest
     {
         return [
             'order_detail_id'  => ['required'],
-            'tailor_id'  => ['required'],
+            'tailor_id'  => ['nullable'],
             'status'  => ['required', 'string'],
             'notes'  => ['required', 'string', 'nullable'],
         ];

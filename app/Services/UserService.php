@@ -17,9 +17,9 @@ class UserService
         $this->userRepository = $userRepository;
     }
 
-    public function getAll(array $fields)
+    public function getAll(?string $search = null, array $fields)
     {
-        return $this->userRepository->getAll($fields);
+        return $this->userRepository->getAll($search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)

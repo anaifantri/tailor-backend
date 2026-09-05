@@ -6,8 +6,8 @@ use App\Models\Client;
 
 class ClientRepository
 {
-    public function getAll(array $fields){
-        return Client::select($fields)->latest()->paginate(10);
+    public function getAll(?string $search = null, array $fields){
+        return Client::select($fields)->search($search)->latest()->paginate(10);
     }
 
     public function getLatestByCode()

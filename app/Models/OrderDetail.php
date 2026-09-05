@@ -14,6 +14,7 @@ class OrderDetail extends Model
         'clothing_type_id',
         'material_id',
         'quantity',
+        'price',
         'fabric_consumed_meter',
         'notes',
     ];
@@ -37,5 +38,9 @@ class OrderDetail extends Model
 
     public function material(){
         return $this->belongsTo(Material::class);
+    }
+
+    public function production_progress(){
+        return $this->hasMany(ProductionProgress::class, 'order_detail_id', 'id');
     }
 }

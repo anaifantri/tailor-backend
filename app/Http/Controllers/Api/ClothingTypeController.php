@@ -7,6 +7,7 @@ use App\Http\Requests\ClothingTypeRequest;
 use App\Http\Resources\ClothingTypeResource;
 use App\Services\ClothingTypeService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class ClothingTypeController extends Controller
 {
@@ -17,18 +18,18 @@ class ClothingTypeController extends Controller
         $this->clothingTypeService = $clothingTypeService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $fields = ['id', 'type', 'base_price'];
+        $fields = ['id', 'code', 'type', 'base_price'];
 
-        $clothingTypes = $this->clothingTypeService->getAll($fields);
+        $clothingTypes = $this->clothingTypeService->getAll($request->search, $fields);
 
         return response()->json(ClothingTypeResource::collection($clothingTypes));
     }
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'type', 'base_price'];
+            $fields = ['id', 'code', 'type', 'base_price'];
 
             $clothingType = $this->clothingTypeService->getByHashedId($hashedId, $fields);
 

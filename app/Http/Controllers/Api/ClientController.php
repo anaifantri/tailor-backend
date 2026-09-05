@@ -7,6 +7,7 @@ use App\Http\Requests\ClientRequest;
 use App\Http\Resources\ClientResource;
 use App\Services\ClientService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
@@ -17,11 +18,11 @@ class ClientController extends Controller
         $this->clientService = $clientService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $fields = ['id', 'code', 'name', 'address', 'email', 'phone', 'created_at'];
 
-        $clients = $this->clientService->getAll($fields);
+        $clients = $this->clientService->getAll($request->search, $fields);
 
         return response()->json(ClientResource::collection($clients));
     }

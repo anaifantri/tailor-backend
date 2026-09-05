@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -23,6 +24,22 @@ class Tailor extends Model
     ];
     
     protected $hidden = ['id'];
+
+    public function scopeSearch(Builder $query, ?string $search): Builder
+    {
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('code', 'like', "%{$search}%")
+                ->orWhere('address', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhereJsonContains('specialty', 'like', "%{$search}%");
+            });
+    }
     
     protected function hashedId(): Attribute
     {
@@ -36,5 +53,9 @@ class Tailor extends Model
             return null;
         }
         return url(Storage::url($value));
+    }
+
+    public function production_progress(){
+        return $this->hasMany(ProductionProgress::class, 'tailor_id', 'id');
     }
 }

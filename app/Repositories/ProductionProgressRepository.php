@@ -13,7 +13,7 @@ class ProductionProgressRepository
 
     public function getById(int $id, array $fields)
     {
-        return ProductionProgress::select($fields)->findOrFail($id);
+        return ProductionProgress::select($fields)->with(['tailor'])->findOrFail($id);
     }
 
     public function create(array $data)

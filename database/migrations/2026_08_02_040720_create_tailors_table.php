@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tailors', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->string('specialty')->nullable();
+            $table->json('specialty')->nullable();
             $table->string('name');
             $table->text('address')->nullable();
             $table->string('phone')->unique();

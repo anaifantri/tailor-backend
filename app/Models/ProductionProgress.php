@@ -25,4 +25,12 @@ class ProductionProgress extends Model
             get: fn () => Crypt::encryptString($this->attributes['id'] ?? ''),
         );
     }
+
+    public function order_detail(){
+        return $this->belongsTo(OrderDetail::class);
+    }
+
+    public function tailor(){
+        return $this->belongsTo(Tailor::class);
+    }
 }

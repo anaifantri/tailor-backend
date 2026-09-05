@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Repositories\ClothingTypeRepository;
+use Exception;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 class ClothingTypeService
 {
@@ -15,9 +17,9 @@ class ClothingTypeService
         $this->clothingTypeRepository = $clothingTypeRepository;
     }
 
-    public function getAll(array $fields)
+    public function getAll(?string $search = null, array $fields)
     {
-        return $this->clothingTypeRepository->getAll($fields);
+        return $this->clothingTypeRepository->getAll($search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)
@@ -32,33 +34,40 @@ class ClothingTypeService
 
     public function create(array $data)
     {
-        $clothingType = $this->clothingTypeRepository->create($data);
-        
-        if (!empty($data['measurements'])) {
-            $clothingType->measurements()->createMany($data['measurements']);
-         }
+        return DB::transaction(function () use ($data) { 
+            $clothingType = $this->clothingTypeRepository->create($data);
             
-        return $clothingType->load('measurements');
+            if (!empty($data['measurements'])) {
+                $clothingType->measurements()->createMany($data['measurements']);
+            }
+                
+            return $clothingType->load('measurements');
+        });
     }
 
     public function update(int $id, array $data)
     {
-        $fields = ['id','type'];
-        $clothingType = $this->clothingTypeRepository->getById($id, $fields);
+        return DB::transaction(function () use ($id, $data) {
+            $clothingType = $this->clothingTypeRepository->update($id, $data);
+            
+            if (!empty($data['measurements'])) {
+                $clothingType->measurements()->delete();
 
-        $this->clothingTypeRepository->update($id, $data);
-        
-        if (!empty($data['measurements'])) {
-            $clothingType->measurements()->delete();
-
-            $clothingType->measurements()->createMany($data['measurements']);
-         }
-        return $clothingType->load('measurements');
+                $clothingType->measurements()->createMany($data['measurements']);
+            }
+            return $clothingType->load('measurements');
+        });
     }
 
     public function delete(string $hashedId)
     {
-        $decryptedId = Crypt::decryptString($hashedId);
-        return $this->clothingTypeRepository->delete((int) $decryptedId);
+        try {
+            $clothingTypeId = (int) Crypt::decryptString($hashedId);
+        } catch (Exception $e) {
+            throw new Exception("Data jenis pakaian tidak valid.");
+        }
+        return DB::transaction(function () use ($clothingTypeId) {
+            return $this->clothingTypeRepository->delete($clothingTypeId);
+        });
     }
 }
