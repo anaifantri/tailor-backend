@@ -11,10 +11,10 @@ class MeasurementHistory extends Model
     protected $appends = ['hashed_id'];
     
     protected $fillable = [
-        'client_id',
+        'customer_id',
         'clothing_type_id',
-        'tailor_id',
-        'measure_at',
+        'measured_by',
+        'measured_at',
         'measurement_details',
         'notes',
     ];
@@ -25,8 +25,8 @@ class MeasurementHistory extends Model
         return $this->belongsTo(ClothingType::class);
     }
 
-    public function client(){
-        return $this->belongsTo(Client::class);
+    public function customer(){
+        return $this->belongsTo(Customer::class);
     }
     
     protected function hashedId(): Attribute

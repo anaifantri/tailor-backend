@@ -30,13 +30,42 @@ class MeasurementHistoryService
         }
     }
 
+    public function getByCustomerAndClothing(string $hashedCustomerId, string $hashedClothingId, array $fields)
+    {
+        try {
+            $customerId = Crypt::decryptString($hashedCustomerId);
+            $clothingId = Crypt::decryptString($hashedClothingId);
+            return $this->measurementHistoryRepository->getByCustomerAndClothing((int) $customerId,(int) $clothingId, $fields ?? ['*']);
+        } catch (DecryptException $e) {
+            throw new \InvalidArgumentException("ID tidak valid.");
+        }
+    }
+
     public function create(array $data)
     {
+        try {
+            $clothingTypeId = (int) Crypt::decryptString($data['clothing_type_id']);
+            $customerId = (int) Crypt::decryptString($data['customer_id']);
+        } catch (DecryptException $e) {
+            throw new DecryptException("Item pakaian / penjahit / pelanggan tidak valid.");
+        }
+        $data['clothing_type_id'] = $clothingTypeId;
+        $data['customer_id'] = $customerId;
+        $data['tailor_id'] = 1;
         return $this->measurementHistoryRepository->create($data);
     }
 
     public function update(int $id, array $data)
     {
+		if(!is_numeric($data['clothing_type_id']))
+		{
+			try {
+				$clothingTypeId = (int) Crypt::decryptString($data['clothing_type_id']);
+			} catch (DecryptException $e) {
+				throw new DecryptException("Item pakaian tidak valid.");
+			}
+			$data['clothing_type_id'] = $clothingTypeId;
+		}
         return $this->measurementHistoryRepository->update($id, $data);
     }
 

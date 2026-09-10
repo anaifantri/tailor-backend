@@ -6,8 +6,8 @@ use App\Models\User;
 
 class UserRepository 
 {
-    public function getAll(?string $search = null, array $fields){
-        return User::select($fields)->search($search)->latest()->paginate(10);
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields){
+        return User::select($fields)->search($search)->latest()->paginate($perPage);
     }
 
     public function getById(int $id, array $fields){

@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-            $table->foreignId('clothing_type_id')->constrained('clothing_types');
+            $table->foreignId('clothing_type_id')->nullable()->constrained('clothing_types')->onDelete('set null');
             $table->foreignId('material_id')->nullable()->constrained('materials')->onDelete('set null');
             $table->integer('quantity')->default(1);
-            $table->decimal('price', total: 10, places: 2)->default(0.00); 
+            $table->json('measurements');
+            $table->decimal('price', total: 12, places: 0)->default(0); 
             $table->decimal('fabric_consumed_meter', total: 5, places: 2)->default(0.00); 
             $table->text('notes')->nullable(); 
 

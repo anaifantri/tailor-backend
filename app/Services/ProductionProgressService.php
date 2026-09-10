@@ -36,12 +36,10 @@ class ProductionProgressService
     {
         try {
             $orderDetailId = (int) Crypt::decryptString($data['order_detail_id']);
-            $tailorId = (int) Crypt::decryptString($data['tailor_id']);
-        } catch (Exception $e) {
-            throw new Exception("Data detail pesanan tidak valid.");
+        } catch (DecryptException $e) {
+            throw new DecryptException("Data detail pesanan tidak valid.");
         }
         $data['order_detail_id'] = $orderDetailId;
-        $data['tailor_id'] = $tailorId;
         return $this->productionProgressRepository->create($data);
     }
 

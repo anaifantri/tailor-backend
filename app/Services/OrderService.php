@@ -46,13 +46,13 @@ class OrderService
     public function create(array $data)
     {
         try {
-            $clientId = (int) Crypt::decryptString($data['client_id']);
+            $customerId = (int) Crypt::decryptString($data['customer_id']);
             $userId   = (int) Crypt::decryptString($data['user_id']);
         } catch (Exception $e) {
             throw new Exception("Data identitas Pelanggan atau Pengguna tidak valid.");
         }
 
-        return DB::transaction(function () use ($data, $clientId, $userId) { 
+        return DB::transaction(function () use ($data, $customerId, $userId) { 
             $lastOrder = $this->orderRepository->getLatestByNumber();
             if(!$lastOrder){
                 $number = 1;
@@ -62,7 +62,7 @@ class OrderService
             $newOrderNumber = str_pad($number, 7, '0', STR_PAD_LEFT);
 
             $data['number'] = $newOrderNumber;
-            $data['client_id'] = $clientId;
+            $data['customer_id'] = $customerId;
             $data['user_id'] = $userId;
 
             $order = $this->orderRepository->create($data);
@@ -73,20 +73,22 @@ class OrderService
                 foreach ($data['order_details'] as $item) {
                     try {
                         $clothingTypeId = (int) Crypt::decryptString($item['clothing_type_id']);
+                        $measurementHistoryId = (int) Crypt::decryptString($item['measurement_history_id']);
                         $materialId = !empty($item['material_id']) 
                             ? (int) Crypt::decryptString($item['material_id']) 
                             : null;
 
                     } catch (Exception $e) {
-                        throw new Exception("Data Jenis Layanan atau Bahan Kain tidak valid.");
+                        throw new Exception("Data Jenis Layanan, Ukuran atau Bahan Kain tidak valid.");
                     }
 
                     $orderDetailsData[] = [
                         'clothing_type_id'            => $clothingTypeId,
                         'material_id'           => $materialId,
                         'quantity'              => $item['qty'] ?? 1,
-                        'price'              => $item['price'] ?? 0,
+                        'price'                 => $item['price'] ?? 0,
                         'fabric_consumed_meter' => $item['fabric_consumed_meter'] ?? 0,
+                        'measurement_history_id' => $measurementHistoryId,
                         'notes'                 => $item['notes'] ?? null,
                         'created_at'            => now(),
                         'updated_at'            => now(),
@@ -132,7 +134,49 @@ class OrderService
             if (!empty($data['order_details'])) {
                 $order->order_details()->delete();
                 $orderDetailsData = [];
-                $order->order_details()->createMany($data['order_details']);
+
+                foreach ($data['order_details'] as $item) {
+					$clothingTypeId = $item['clothing_type_id'];
+					$measurementHistoryId = $item['measurement_history_id'];
+					$materialId = $item['material_id'];
+					
+					if (!is_numeric($clothingTypeId)) {
+						try {
+								$clothingTypeId = (int) Crypt::decryptString($item['clothing_type_id']);
+						} catch (Exception $e) {
+							throw new Exception("Data Jenis Layanan tidak valid.");
+						}
+					}
+					if (!is_numeric($measurementHistoryId)) {
+						try {
+							$measurementHistoryId = (int) Crypt::decryptString($item['measurement_history_id']);
+						} catch (Exception $e) {
+							throw new Exception("Data Ukuran tidak valid.");
+						}
+					}
+					if (!is_numeric($materialId)) {
+						try {
+							$materialId = !empty($item['material_id']) 
+								? (int) Crypt::decryptString($item['material_id']) 
+								: null;
+						} catch (Exception $e) {
+							throw new Exception("Data Bahan Kain tidak valid.");
+						}
+					}
+
+                    $orderDetailsData[] = [
+                        'clothing_type_id'            => $clothingTypeId,
+                        'material_id'           => $materialId,
+                        'quantity'              => $item['qty'] ?? 1,
+                        'price'                 => $item['price'] ?? 0,
+                        'fabric_consumed_meter' => $item['fabric_consumed_meter'] ?? 0,
+                        'measurement_history_id' => $measurementHistoryId,
+                        'notes'                 => $item['notes'] ?? null,
+                        'created_at'            => now(),
+                        'updated_at'            => now(),
+                    ];
+                }
+                $order->order_details()->createMany($orderDetailsData);
             }
 
             $amountPaid = (float) $data['amount_paid'] ?? 0;

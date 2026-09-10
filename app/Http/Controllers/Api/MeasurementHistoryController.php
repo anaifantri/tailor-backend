@@ -7,6 +7,7 @@ use App\Http\Requests\MeasurementHistoryRequest;
 use App\Http\Resources\MeasurementHistoryResource;
 use App\Services\MeasurementHistoryService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class MeasurementHistoryController extends Controller
 {
@@ -19,7 +20,7 @@ class MeasurementHistoryController extends Controller
 
     public function index()
     {
-        $fields = ['id', 'clothing_id', 'tailor_id', 'client_id', 'measured_at', 'notes', 'measurement_details'];
+        $fields = ['id', 'clothing_type_id', 'tailor_id', 'customer_id', 'measured_at', 'notes', 'measurement_details'];
 
         $measurementHistories = $this->measurementHistoryService->getAll($fields);
 
@@ -28,11 +29,25 @@ class MeasurementHistoryController extends Controller
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'clothing_id', 'tailor_id', 'client_id', 'measured_at', 'notes', 'measurement_details'];
+            $fields = ['id', 'clothing_type_id', 'tailor_id', 'customer_id', 'measured_at', 'notes', 'measurement_details'];
 
             $measurementHistory = $this->measurementHistoryService->getByHashedId($hashedId, $fields);
 
             return response()->json(new MeasurementHistoryResource(['measurement_history' => $measurementHistory]));
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Data ukuran pelanggan tidak ditemukan'
+            ], 404);
+        }
+    }
+
+    public function getByCustomerAndClothing(Request $request){
+        try {
+            $fields = ['id', 'clothing_type_id', 'tailor_id', 'customer_id', 'measured_at', 'notes', 'measurement_details'];
+
+            $measurementHistories = $this->measurementHistoryService->getByCustomerAndClothing($request->customerId, $request->clothingTypeId, $fields);
+
+            return response()->json(new MeasurementHistoryResource(['measurement_histories' => $measurementHistories]));
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data ukuran pelanggan tidak ditemukan'

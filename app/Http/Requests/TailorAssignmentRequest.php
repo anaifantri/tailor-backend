@@ -6,7 +6,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Crypt;
 
-class MeasurementHistoryRequest extends FormRequest
+class TailorAssignmentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -44,11 +44,14 @@ class MeasurementHistoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id'  => ['required'],
-            'clothing_type_id'  => ['required'],
-            'measured_at'  => ['required'],
-            'measurement_details'  => ['required'],
-            'notes'  => ['required', 'string', 'nullable'],
+            'order_detail_id'  => ['required'],
+            'tailor_id'  => ['nullable'],
+            'quantity_assigned'  => ['required', 'string'],
+            'assignment_date'  => ['required'],
+            'labor_cost'  => ['required'],
+            'total_labor_cost'  => ['required'],
+            'status'  => ['nullable'],
+            'notes'  => ['nullable'],
         ];
     }
 }

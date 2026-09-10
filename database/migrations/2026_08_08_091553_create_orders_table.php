@@ -16,10 +16,11 @@ return new class extends Migration
 
             $table->string('number')->unique();
             $table->foreignId('user_id')->constrained();
-            $table->foreignId('client_id')->constrained();
+            $table->foreignId('customer_id')->constrained();
             $table->date('order_date');
             $table->date('fitting_date')->nullable();
             $table->date('due_date');
+            $table->decimal('discount', total: 12, places: 0)->default(0);
             $table->decimal('tax', total: 12, places: 0)->default(0);
             $table->decimal('total', total: 12, places: 0)->default(0);
 

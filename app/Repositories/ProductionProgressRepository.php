@@ -6,14 +6,14 @@ use App\Models\ProductionProgress;
 
 class ProductionProgressRepository
 {
-    public function getByOrderDetailAndTailor(int $orderDetailId, int $tailorId)
+    public function getByOrderDetail(int $orderDetailId)
     {
-        return ProductionProgress::where('order_detail_id', $orderDetailId)->where('tailor_id', $tailorId)->latest();
+        return ProductionProgress::where('order_detail_id', $orderDetailId)->latest();
     }
 
     public function getById(int $id, array $fields)
     {
-        return ProductionProgress::select($fields)->with(['tailor'])->findOrFail($id);
+        return ProductionProgress::select($fields)->with(['order_detail'])->findOrFail($id);
     }
 
     public function create(array $data)

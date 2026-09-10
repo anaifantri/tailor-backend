@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('unit');
+            $table->decimal('initial_stock', total: 5, places: 2)->default(0.00); 
+            $table->decimal('stock', total: 5, places: 2)->default(0.00); 
             $table->string('photo')->nullable();
             $table->timestamps();
         });

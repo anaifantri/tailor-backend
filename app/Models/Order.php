@@ -14,7 +14,7 @@ class Order extends Model
     protected $fillable = [
         'number',
         'user_id',
-        'client_id',
+        'customer_id',
         'order_date',
         'fitting_date',
         'due_date',
@@ -44,8 +44,8 @@ class Order extends Model
 
         return $query->where(function ($q) use ($search) {
                 $q->where('number', 'like', "%{$search}%")
-                ->orWhereHas('client', function ($clientQuery) use ($search) {
-                    $clientQuery->where('name', 'like', "%{$search}%")
+                ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                    $customerQuery->where('name', 'like', "%{$search}%")
                             ->orWhere('phone', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%");
                 });
@@ -74,8 +74,8 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function client(){
-        return $this->belongsTo(Client::class);
+    public function customer(){
+        return $this->belongsTo(Customer::class);
     }
 
     public function order_details(){

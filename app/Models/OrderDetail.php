@@ -16,6 +16,7 @@ class OrderDetail extends Model
         'quantity',
         'price',
         'fabric_consumed_meter',
+        'measurements',
         'notes',
     ];
     
@@ -42,5 +43,9 @@ class OrderDetail extends Model
 
     public function production_progress(){
         return $this->hasMany(ProductionProgress::class, 'order_detail_id', 'id');
+    }
+
+    public function tailor_assignments(){
+        return $this->hasMany(TailorAssignment::class, 'order_detail_id', 'id');
     }
 }

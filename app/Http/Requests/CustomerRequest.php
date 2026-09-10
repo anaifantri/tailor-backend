@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 
-class ClientRequest extends FormRequest
+class CustomerRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -49,11 +49,11 @@ class ClientRequest extends FormRequest
             'email' => [
                 'nullable',
                 'email:rfc,dns',
-                Rule::unique('clients', 'email')->ignore($this->id),
+                Rule::unique('customers', 'email')->ignore($this->id),
                 ],
             'phone'  => [
                     'required',
-                    Rule::unique('clients', 'phone')->ignore($this->id),
+                    Rule::unique('customers', 'phone')->ignore($this->id),
                 ],
             'address' => [
                     'nullable'

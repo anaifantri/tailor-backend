@@ -31,7 +31,7 @@ class ClothingType extends Model
             });
     }
 
-    public function measurements(){
+    public function measurement_details(){
         return $this->hasMany(MeasurementDetail::class, 'clothing_type_id', 'id');
     }
 

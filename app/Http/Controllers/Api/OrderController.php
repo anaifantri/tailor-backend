@@ -20,7 +20,7 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $fields = ['id', 'number', 'user_id', 'client_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
+        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
 
         $orders = $this->orderService->getAll($request->month, $request->year, $request->search, $fields);
 
@@ -29,7 +29,7 @@ class OrderController extends Controller
 
     public function unpaid(Request $request)
     {
-        $fields = ['id', 'number', 'user_id', 'client_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
+        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
 
         $orders = $this->orderService->getUnpaid($request->search, $fields);
 
@@ -38,7 +38,7 @@ class OrderController extends Controller
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'number', 'user_id', 'client_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
+            $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
 
             $order = $this->orderService->getByHashedId($hashedId, $fields);
 

@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
-class Client extends Model
+class Customer extends Model
 {
+    use HasFactory;
+    
     protected $appends = ['hashed_id'];
     
     protected $fillable = [
@@ -37,7 +40,7 @@ class Client extends Model
     }
 
     public function measurement_histories(){
-        return $this->hasMany(MeasurementHistory::class, 'client_id', 'id');
+        return $this->hasMany(MeasurementHistory::class, 'customer_id', 'id');
     }
     
     protected function hashedId(): Attribute
@@ -48,6 +51,6 @@ class Client extends Model
     }
 
     public function orders(){
-        return $this->hasMany(Order::class, 'client_id', 'id');
+        return $this->hasMany(Order::class, 'customer_id', 'id');
     }
 }

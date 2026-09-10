@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Validation\Rule;
 
 class OrderRequest extends FormRequest
 {
@@ -45,7 +46,11 @@ class OrderRequest extends FormRequest
     {
         return [
             'user_id'  => ['required'],
-            'client_id'  => ['required'],
+            'number'  => [
+                    'required',
+                    Rule::unique('orders', 'number')->ignore($this->id),
+                ],
+            'customer_id'  => ['required'],
             'order_date'  => ['required'],
             'fitting_date'  => ['nullable'],
             'due_date'  => ['required'],
@@ -53,6 +58,12 @@ class OrderRequest extends FormRequest
             'payment_method'  => ['nullable'],
             'payment_date'  => ['nullable'],
             'notes'  => ['nullable'],
+            'discount' => [
+                'nullable',
+                'numeric',
+                'decimal:0,2',
+                'min:0',
+                ],
             'tax' => [
                 'nullable',
                 'numeric',

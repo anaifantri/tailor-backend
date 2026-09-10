@@ -3,37 +3,42 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ClientRequest;
-use App\Http\Resources\ClientResource;
-use App\Services\ClientService;
+use App\Http\Requests\CustomerRequest;
+use App\Http\Resources\CustomerResource;
+use App\Services\CustomerService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
-class ClientController extends Controller
+class CustomerController extends Controller
 {
-    private $clientService;
+    private $customerService;
 
-    public function __construct(ClientService $clientService)
+    public function __construct(CustomerService $customerService)
     {
-        $this->clientService = $clientService;
+        $this->customerService = $customerService;
     }
 
     public function index(Request $request)
     {
         $fields = ['id', 'code', 'name', 'address', 'email', 'phone', 'created_at'];
+		
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', null);
 
-        $clients = $this->clientService->getAll($request->search, $fields);
+        $customers = $this->customerService->getAll($perPage, $search, $fields);
+		
+		return response()->json($customers, 200);
 
-        return response()->json(ClientResource::collection($clients));
+        // return response()->json(CustomerResource::collection($customers));
     }
 
     public function show(string $hashedId){
         try {
             $fields = ['id', 'code', 'name', 'address', 'email', 'phone', 'created_at'];
 
-            $client = $this->clientService->getByHashedId($hashedId, $fields);
+            $customer = $this->customerService->getByHashedId($hashedId, $fields);
 
-            return response()->json(new ClientResource(['client' => $client]));
+            return response()->json(new CustomerResource(['customer' => $customer]));
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data pelanggan tidak ditemukan'
@@ -41,26 +46,26 @@ class ClientController extends Controller
         }
     }
 
-    public function store(ClientRequest $request)
+    public function store(CustomerRequest $request)
     {
         $validateData = $request->validated();
 
-        $client = $this->clientService->create($validateData);
+        $customer = $this->customerService->create($validateData);
 
-        return response()->json(new ClientResource([
+        return response()->json(new CustomerResource([
             'message' => 'Pendaftaran pelanggan baru berhasil',
-            'client' => $client
+            'customer' => $customer
             ]), 201);
     }
 
-    public function update(ClientRequest $request, string $hashedId)
+    public function update(CustomerRequest $request, string $hashedId)
     {
         try {
             $validateData = $request->validated();
             
-            $client = $this->clientService->update($request->id, $validateData);
+            $customer = $this->customerService->update($request->id, $validateData);
             
-            return response()->json(new ClientResource($client));
+            return response()->json(new CustomerResource($customer));
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data pelanggan tidak ditemukan'
@@ -71,7 +76,7 @@ class ClientController extends Controller
     public function destroy(string $hashedId)
     {
         try {
-            $this->clientService->delete($hashedId);
+            $this->customerService->delete($hashedId);
             return response()->json([
                 'message' => 'Hapus data pelanggan berhasil..!!'
             ]);

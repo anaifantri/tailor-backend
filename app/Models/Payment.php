@@ -35,8 +35,8 @@ class Payment extends Model
 				  ->orWhere('payment_status', 'like', "%{$search}%")
                   ->orWhereHas('order', function ($orderQuery) use ($search) {
                       $orderQuery->where('number', 'like', "%{$search}%")
-					  ->orWhereHas('client', function ($clientQuery) use ($search) {
-						  $clientQuery->where('name', 'like', "%{$search}%")
+					  ->orWhereHas('customer', function ($customerQuery) use ($search) {
+						  $customerQuery->where('name', 'like', "%{$search}%")
 										->orWhere('phone', 'like', "%{$search}%")
 										->orWhere('email', 'like', "%{$search}%");
 					  });

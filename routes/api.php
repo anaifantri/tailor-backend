@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\ClothingTypeController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductionProgressController;
+use App\Http\Controllers\Api\TailorAssignmentController;
 use App\Http\Controllers\Api\TailorController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
@@ -30,22 +31,23 @@ Route::get('/email/verify/{id}/{hash}', [UserController::class, 'verify'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/email/verification-notification', [UserController::class, 'resend'])
         ->middleware('throttle:6,1');
-    //User Routes
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::post('/users/register', [UserController::class, 'store']);
-    Route::post('/users/delete/{id}', [UserController::class, 'destroy']);
-    Route::post('/users/{id}/edit', [UserController::class, 'update']);
-    Route::get('/user', function (Request $request) {
-            return $request->user();
-    });
     Route::middleware('verified')->group(function () {
-        //Client or Customuer Routes
-        Route::get('/clients', [ClientController::class, 'index']);
-        Route::get('/clients/{id}', [ClientController::class, 'show']);
-        Route::post('/clients', [ClientController::class, 'store']);
-        Route::post('/clients/delete/{id}', [ClientController::class, 'destroy']);
-        Route::post('/clients/{id}/edit', [ClientController::class, 'update']);
+		//User Routes
+		Route::get('/users', [UserController::class, 'index']);
+		Route::get('/users/{id}', [UserController::class, 'show']);
+		Route::post('/users/register', [UserController::class, 'store']);
+		Route::post('/users/delete/{id}', [UserController::class, 'destroy']);
+		Route::post('/users/{id}/edit', [UserController::class, 'update']);
+		Route::get('/user', function (Request $request) {
+				return $request->user();
+		});
+		
+        //Customuer Routes
+        Route::get('/customers', [CustomerController::class, 'index']);
+        Route::get('/customers/{id}', [CustomerController::class, 'show']);
+        Route::post('/customers', [CustomerController::class, 'store']);
+        Route::post('/customers/delete/{id}', [CustomerController::class, 'destroy']);
+        Route::post('/customers/{id}/edit', [CustomerController::class, 'update']);
 
         //Tailor Routes
         Route::get('/tailors', [TailorController::class, 'index']);
@@ -71,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
         //Measurement History Routes
         Route::get('/measurement-histories', [MeasurementHistoryController::class, 'index']);
         Route::get('/measurement-histories/{id}', [MeasurementHistoryController::class, 'show']);
+        Route::get('/getbycustomerandclothing', [MeasurementHistoryController::class, 'getByCustomerAndClothing']);
         Route::post('/measurement-histories', [MeasurementHistoryController::class, 'store']);
         Route::post('/measurement-histories/delete/{id}', [MeasurementHistoryController::class, 'destroy']);
         Route::post('/measurement-histories/{id}/edit', [MeasurementHistoryController::class, 'update']);
@@ -95,5 +98,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/payments', [PaymentController::class, 'store']);
         Route::post('/payments/delete/{id}', [PaymentController::class, 'destroy']);
         Route::post('/payments/{id}/edit', [PaymentController::class, 'update']);
+
+        //Tailor Assignment Routes
+        Route::get('/tailor-assignments', [TailorAssignmentController::class, 'index']);
+        // Route::get('/tailor-assignments/{id}', [TailorAssignmentController::class, 'show']);
+        Route::post('/tailor-assignments', [TailorAssignmentController::class, 'store']);
+        // Route::post('/tailor-assignments/delete/{id}', [TailorAssignmentController::class, 'destroy']);
+        // Route::post('/tailor-assignments/{id}/edit', [TailorAssignmentController::class, 'update']);
     });
 });

@@ -55,7 +55,7 @@ class Tailor extends Model
         return url(Storage::url($value));
     }
 
-    public function production_progress(){
-        return $this->hasMany(ProductionProgress::class, 'tailor_id', 'id');
+    public function tailor_assignments(){
+        return $this->hasMany(TailorAssignment::class, 'tailor_id', 'id');
     }
 }

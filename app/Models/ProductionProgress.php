@@ -12,7 +12,7 @@ class ProductionProgress extends Model
     
     protected $fillable = [
         'order_detail_id',
-        'tailor_id',
+        'progress_date',
         'status',
         'notes',
     ];
@@ -28,9 +28,5 @@ class ProductionProgress extends Model
 
     public function order_detail(){
         return $this->belongsTo(OrderDetail::class);
-    }
-
-    public function tailor(){
-        return $this->belongsTo(Tailor::class);
     }
 }

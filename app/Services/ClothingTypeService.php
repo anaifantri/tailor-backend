@@ -38,10 +38,10 @@ class ClothingTypeService
             $clothingType = $this->clothingTypeRepository->create($data);
             
             if (!empty($data['measurements'])) {
-                $clothingType->measurements()->createMany($data['measurements']);
+                $clothingType->measurement_details()->createMany($data['measurements']);
             }
                 
-            return $clothingType->load('measurements');
+            return $clothingType->load('measurement_details');
         });
     }
 
@@ -51,11 +51,11 @@ class ClothingTypeService
             $clothingType = $this->clothingTypeRepository->update($id, $data);
             
             if (!empty($data['measurements'])) {
-                $clothingType->measurements()->delete();
+                $clothingType->measurement_details()->delete();
 
-                $clothingType->measurements()->createMany($data['measurements']);
+                $clothingType->measurement_details()->createMany($data['measurements']);
             }
-            return $clothingType->load('measurements');
+            return $clothingType->load('measurement_details');
         });
     }
 

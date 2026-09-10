@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\OrderDetail;
 use App\Models\ProductionProgress;
+use Illuminate\Support\Carbon;
 
 class OrderDetailObserver
 {
@@ -14,7 +15,7 @@ class OrderDetailObserver
     {
         ProductionProgress::create([
             'order_detail_id' => $orderDetail->id,
-            'tailor_id'       => null,
+            'progress_date'   => Carbon::now()->toDateString(),
             'status'          => 'Antrian',
             'notes'           => 'Antrean awal diisi otomatis oleh sistem.',
         ]);

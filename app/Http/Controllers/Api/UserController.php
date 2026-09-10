@@ -26,8 +26,13 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $fields = ['id', 'is_active', 'name', 'username', 'email', 'phone', 'email_verified_at'];
+		
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', null);
 
-        $users = $this->userService->getAll($request->search, $fields);
+        $users = $this->userService->getAll($perPage, $search, $fields);
+		
+		return response()->json($users, 200);
 
         return response()->json(UserResource::collection($users));
     }
@@ -102,7 +107,7 @@ class UserController extends Controller
             ]), 201);
     }
 
-    public function update(UpdateUserRequest $request, string $hashedId)
+    public function update(UserRequest $request, string $hashedId)
     {
         try {
             if($request->password){

@@ -7,12 +7,12 @@ use App\Models\ClothingType;
 class ClothingTypeRepository
 {
     public function getAll(?string $search = null, array $fields){
-        return ClothingType::select($fields)->search($search)->latest()->paginate(10);
+        return ClothingType::select($fields)->search($search)->with('measurement_details')->latest()->paginate(10);
     }
 
     public function getById(int $id, array $fields)
     {
-        return ClothingType::select($fields)->with('measurements')->findOrFail($id);
+        return ClothingType::select($fields)->with('measurement_details')->findOrFail($id);
     }
 
     public function findById(int $id): ?ClothingType

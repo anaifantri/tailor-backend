@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('production_progress', function (Blueprint $table) {
+        Schema::create('tailor_assignments', function (Blueprint $table) {
             $table->id();
-
+            
             $table->foreignId('order_detail_id')->constrained('order_details')->onDelete('cascade');
-            $table->string('status')->default('queued'); 
-            $table->date('progress_date');
+            $table->foreignId('tailor_id')->constrained('tailors')->onDelete('cascade');
+            $table->date('assignment_date');
+            $table->integer('quantity_assigned')->default(1);
+            $table->decimal('labor_cost', total: 12, places: 0)->default(0);
+            $table->decimal('total_labor_cost', total: 12, places: 0)->default(0); 
+            $table->string('status')->nullable()->default('queued');
             $table->text('notes')->nullable();
 
             $table->timestamps();
@@ -28,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('production_progress');
+        Schema::dropIfExists('tailor_assignments');
     }
 };

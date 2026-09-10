@@ -8,12 +8,17 @@ class MeasurementHistoryRepository
 {
     public function getAll(array $fields)
     {
-        return MeasurementHistory::select($fields)->latest()->paginate(10);
+        return MeasurementHistory::select($fields)->with(['customer', 'clothing_type'])->latest()->paginate(10);
     }
 
     public function getById(int $id, array $fields)
     {
-        return MeasurementHistory::select($fields)->findOrFail($id);
+        return MeasurementHistory::select($fields)->with(['customer', 'clothing_type'])->findOrFail($id);
+    }
+
+    public function getByCustomerAndClothing(int $customerId, int $clothingId, array $fields)
+    {
+        return MeasurementHistory::select($fields)->where('customer_id', $customerId)->where('clothing_type_id', $clothingId)->with(['customer', 'clothing_type'])->latest()->get();
     }
 
     public function create(array $data)
