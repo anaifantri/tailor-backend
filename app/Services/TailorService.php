@@ -17,9 +17,9 @@ class TailorService
         $this->tailorRepository = $tailorRepository;
     }
 
-    public function getAll(?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields)
     {
-        return $this->tailorRepository->getAll($search, $fields);
+        return $this->tailorRepository->getAll($perPage, $search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)

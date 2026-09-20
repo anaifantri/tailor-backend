@@ -21,10 +21,15 @@ class TailorController extends Controller
     public function index(Request $request)
     {
         $fields = ['id', 'code', 'specialty', 'photo', 'name', 'address', 'email', 'phone', 'is_active'];
+		
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', null);
 
-        $tailors = $this->tailorService->getAll($request->search, $fields);
+        $tailors = $this->tailorService->getAll($perPage, $search, $fields);
+		
+		return response()->json($tailors, 200);
 
-        return response()->json(TailorResource::collection($tailors));
+       // return response()->json(TailorResource::collection($tailors));
     }
 
     public function show(string $hashedId){

@@ -6,14 +6,14 @@ use App\Models\Order;
 
 class OrderRepository
 {
-    public function getAll(int $month, int $year, ?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, int $month, int $year, ?string $search = null, array $fields)
     {
-        return Order::select($fields)->byMonthYear($month, $year)->search($search)->with(['order_details','order_details.clothing_type','order_details.measurement_history', 'order_details.production_progress','order_details.material','payments', 'customer'])->latest()->paginate(10);
+        return Order::select($fields)->byMonthYear($month, $year)->search($search)->with(['order_details','order_details.clothing_type', 'order_details.production_progress','order_details.material','payments', 'customer'])->latest()->paginate($perPage);
     }
 
     public function getUnpaid(?string $search = null, array $fields)
     {
-        return Order::select($fields)->search($search)->unpaid()->with(['order_details','order_details.measurement_history','order_details.clothing_type', 'order_details.production_progress','order_details.material','payments', 'customer'])->latest()->get();
+        return Order::select($fields)->search($search)->unpaid()->with(['order_details','order_details.clothing_type', 'order_details.production_progress','order_details.material','payments', 'customer'])->latest()->get();
     }
 
     public function getLatestByNumber()
@@ -21,9 +21,14 @@ class OrderRepository
         return Order::orderBy('number', 'desc')->latest()->first();
     }
 
+    public function getBySearch(?string $search = null, array $fields)
+    {
+        return Order::select($fields)->search($search)->latest()->get();
+    }
+
     public function getById(int $id, array $fields)
     {
-        return Order::select($fields)->with(['order_details','order_details.clothing_type','order_details.measurement_history', 'order_details.production_progress','order_details.material','payments', 'customer'])->findOrFail($id);
+        return Order::select($fields)->with(['order_details','order_details.clothing_type', 'order_details.production_progress','order_details.material','payments', 'customer'])->findOrFail($id);
     }
 
     public function findById(int $id): ?Order

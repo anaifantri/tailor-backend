@@ -40,10 +40,12 @@ class CustomResetPasswordNotification extends Notification
             . '&email=' . urlencode($notifiable->getEmailForPasswordReset());
 
         return (new MailMessage)
-            ->subject('Reset Your Password')
-            ->line('You are receiving this email because we received a password reset request for your account.')
+            ->subject('Permintaan Reset Password Akun Anda')
+            ->greeting('Halo, ' . $notifiable->name . '!')
+            ->line('Anda menerima email ini karena kami menerima permintaan atur ulang (reset) password untuk akun Anda.')
             ->action('Reset Password', $frontendUrl)
-            ->line('If you did not request a password reset, no further action is required.');
+            ->line('Link reset password ini akan kedaluwarsa dalam 60 menit.')
+            ->line('Jika Anda tidak merasa melakukan permintaan ini, abaikan saja email ini.');
     }
 
     /**

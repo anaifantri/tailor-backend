@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -25,11 +26,15 @@ class LoginController extends Controller
 
         $user = auth()->user();
         if($user->is_active){
+            $tokenName = $request->input('device_name') 
+                ?? Str::limit($request->userAgent() ?? 'Unknown Device', 50, '...');
+				$user->tokens()->where('name', $tokenName)->delete();
             return response()->json([
-                'token' => $user->createToken('laravel11')->plainTextToken,
+                'token' => $user->createToken($tokenName)->plainTextToken,
                 'user' => $user
                 ]);
         }else{
+            $user->currentAccessToken()?->delete();
             return response()->json([
                 'error' => 'account_inactive',
                 'message' => 'Your account is currently inactive. Please contact IT support.'

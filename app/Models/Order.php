@@ -18,8 +18,10 @@ class Order extends Model
         'order_date',
         'fitting_date',
         'due_date',
+        'discount',
         'tax',
         'total',
+        'notes',
     ];
     
     protected $hidden = ['id'];

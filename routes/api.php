@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/user', function (Request $request) {
 				return $request->user();
 		});
+        Route::post('/users/change-password', [UserController::class, 'changePassword']);
 		
         //Customuer Routes
         Route::get('/customers', [CustomerController::class, 'index']);
@@ -73,13 +74,14 @@ Route::middleware('auth:sanctum')->group(function () {
         //Measurement History Routes
         Route::get('/measurement-histories', [MeasurementHistoryController::class, 'index']);
         Route::get('/measurement-histories/{id}', [MeasurementHistoryController::class, 'show']);
-        Route::get('/getbycustomerandclothing', [MeasurementHistoryController::class, 'getByCustomerAndClothing']);
+        Route::get('/getbycustomerandclothing', [MeasurementHistoryController::class, 'getByCustomerAndClothingType']);
         Route::post('/measurement-histories', [MeasurementHistoryController::class, 'store']);
         Route::post('/measurement-histories/delete/{id}', [MeasurementHistoryController::class, 'destroy']);
         Route::post('/measurement-histories/{id}/edit', [MeasurementHistoryController::class, 'update']);
 
         //Order Routes
         Route::get('/orders', [OrderController::class, 'index']);
+        Route::get('/orders/search', [OrderController::class, 'getBySearch']);
         Route::get('/orders/unpaid', [OrderController::class, 'unpaid']);
         Route::get('/orders/{id}', [OrderController::class, 'show']);
         Route::post('/orders', [OrderController::class, 'store']);

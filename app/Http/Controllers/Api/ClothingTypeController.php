@@ -20,16 +20,20 @@ class ClothingTypeController extends Controller
 
     public function index(Request $request)
     {
-        $fields = ['id', 'code', 'type', 'base_price'];
+        $fields = ['id', 'code', 'type', 'category', 'base_price'];
+		
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', null);
 
-        $clothingTypes = $this->clothingTypeService->getAll($request->search, $fields);
-
-        return response()->json(ClothingTypeResource::collection($clothingTypes));
+        $clothingTypes = $this->clothingTypeService->getAll($perPage, $search, $fields);
+		
+		
+		return response()->json($clothingTypes, 200);
     }
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'code', 'type', 'base_price'];
+            $fields = ['id', 'code', 'type', 'category', 'base_price'];
 
             $clothingType = $this->clothingTypeService->getByHashedId($hashedId, $fields);
 

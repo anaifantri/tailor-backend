@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('measurement_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained()->onDelete('cascade');
-            $table->foreignId('clothing_type_id')->constrained();
+            $table->foreignId('clothing_type_id')->nullable()->constrained('clothing_types')->onDelete('set null');
+            $table->string('category');
             $table->string('measured_by');
             $table->date('measured_at');
             $table->json('measurement_details');
-            $table->text('notes');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

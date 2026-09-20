@@ -20,16 +20,21 @@ class MaterialController extends Controller
 
     public function index(Request $request)
     {
-        $fields = ['id', 'code', 'name', 'description', 'photo', 'unit'];
+        $fields = ['id', 'code', 'name', 'description', 'photo', 'unit', 'stock', 'initial_stock'];
+		
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', null);
 
-        $materials = $this->materialService->getAll($request->search, $fields);
+        $materials = $this->materialService->getAll($perPage, $search, $fields);
+		
+		return response()->json($materials, 200);
 
-        return response()->json(MaterialResource::collection($materials));
+        //return response()->json(MaterialResource::collection($materials));
     }
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'code', 'name', 'description', 'photo', 'unit'];
+            $fields = ['id', 'code', 'name', 'description', 'photo', 'unit', 'stock', 'initial_stock'];
 
             $material = $this->materialService->getByHashedId($hashedId, $fields);
 

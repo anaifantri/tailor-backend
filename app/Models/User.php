@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use App\Notifications\CustomResetPasswordNotification;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\CustomVerifyEmailNotification;
+// use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -12,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
+// use Illuminate\Support\Facades\URL;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -96,25 +97,26 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function sendEmailVerificationNotification()
     {
-        VerifyEmail::createUrlUsing(function ($notifiable) {
-            // Membuat temporary signed URL versi backend
-            $backendUrl = URL::temporarySignedRoute(
-                'verification.verify',
-                now()->addMinutes(60),
-                [
-                    'id' => $notifiable->getKey(),
-                    'hash' => sha1($notifiable->getEmailForVerification()),
-                ]
-            );
+        $this->notify(new CustomVerifyEmailNotification());
+        // VerifyEmail::createUrlUsing(function ($notifiable) {
+        //     // Membuat temporary signed URL versi backend
+        //     $backendUrl = URL::temporarySignedRoute(
+        //         'verification.verify',
+        //         now()->addMinutes(60),
+        //         [
+        //             'id' => $notifiable->getKey(),
+        //             'hash' => sha1($notifiable->getEmailForVerification()),
+        //         ]
+        //     );
 
-            // Ekstrak query string (signature & expires) dari backendUrl
-            $queryString = parse_url($backendUrl, PHP_URL_QUERY);
+        //     // Ekstrak query string (signature & expires) dari backendUrl
+        //     $queryString = parse_url($backendUrl, PHP_URL_QUERY);
 
-            // Arahkan user ke halaman verifikasi di Frontend (SPA)
-            return config('app.frontend_url') . '/email-verify/' . $notifiable->getKey() . '/' . sha1($notifiable->getEmailForVerification()) . '?' . $queryString;
-        });
+        //     // Arahkan user ke halaman verifikasi di Frontend (SPA)
+        //     return config('app.frontend_url') . '/email-verify/' . $notifiable->getKey() . '/' . sha1($notifiable->getEmailForVerification()) . '?' . $queryString;
+        // });
 
-        $this->notify(new VerifyEmail);
+        // $this->notify(new VerifyEmail);
     }
     
     protected function hashedId(): Attribute

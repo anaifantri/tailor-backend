@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
 class Material extends Model
 {
+    use HasFactory;
     protected $appends = ['hashed_id'];
     
     protected $fillable = [
@@ -17,6 +19,8 @@ class Material extends Model
         'name',
         'description',
         'unit',
+        'initial_stock',
+        'stock',
         'photo',
     ];
     

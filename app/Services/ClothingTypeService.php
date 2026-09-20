@@ -17,31 +17,28 @@ class ClothingTypeService
         $this->clothingTypeRepository = $clothingTypeRepository;
     }
 
-    public function getAll(?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields)
     {
-        return $this->clothingTypeRepository->getAll($search, $fields);
+        return $this->clothingTypeRepository->getAll($perPage, $search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)
     {
         try {
             $decryptedId = Crypt::decryptString($hashedId);
-            return $this->clothingTypeRepository->getById((int) $decryptedId, $fields ?? ['*']);
         } catch (DecryptException $e) {
             throw new \InvalidArgumentException("ID tidak valid.");
         }
+		
+            return $this->clothingTypeRepository->getById((int) $decryptedId, $fields ?? ['*']);
     }
 
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) { 
             $clothingType = $this->clothingTypeRepository->create($data);
-            
-            if (!empty($data['measurements'])) {
-                $clothingType->measurement_details()->createMany($data['measurements']);
-            }
                 
-            return $clothingType->load('measurement_details');
+            return $clothingType;
         });
     }
 
@@ -49,13 +46,8 @@ class ClothingTypeService
     {
         return DB::transaction(function () use ($id, $data) {
             $clothingType = $this->clothingTypeRepository->update($id, $data);
-            
-            if (!empty($data['measurements'])) {
-                $clothingType->measurement_details()->delete();
 
-                $clothingType->measurement_details()->createMany($data['measurements']);
-            }
-            return $clothingType->load('measurement_details');
+            return $clothingType;
         });
     }
 

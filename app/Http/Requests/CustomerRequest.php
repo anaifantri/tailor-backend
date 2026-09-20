@@ -51,13 +51,35 @@ class CustomerRequest extends FormRequest
                 'email:rfc,dns',
                 Rule::unique('customers', 'email')->ignore($this->id),
                 ],
-            'phone'  => [
-                    'required',
-                    Rule::unique('customers', 'phone')->ignore($this->id),
-                ],
+			'phone'     => [
+				'nullable',
+				'string',
+				'regex:/^(\+62|62|0)[0-9]{9,12}$/',
+				Rule::unique('customers', 'phone')->ignore($this->id),
+			],
             'address' => [
                     'nullable'
                     ],
         ];
     }
+	
+	public function messages(): array
+	{
+		return [
+			// Name
+			'name.required'     => 'Nama lengkap wajib diisi.',
+			'name.string'       => 'Nama harus berupa teks.',
+			'name.max'          => 'Nama tidak boleh lebih dari 255 karakter.',
+
+			// Email
+			'email.email'       => 'Format alamat email tidak valid.',
+			'email.dns'         => 'Domain email tidak valid atau tidak terdaftar.',
+			'email.unique'      => 'Alamat email ini sudah terdaftar.',
+
+			// Phone
+			'phone.string'      => 'Nomor telepon harus berupa teks.',
+			'phone.regex'       => 'Format nomor telepon tidak valid (gunakan format Indonesia yang benar).',
+			'phone.unique'      => 'Nomor telepon ini sudah terdaftar.',
+		];
+	}
 }

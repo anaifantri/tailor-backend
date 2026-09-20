@@ -46,9 +46,33 @@ class MeasurementHistoryRequest extends FormRequest
         return [
             'customer_id'  => ['required'],
             'clothing_type_id'  => ['required'],
-            'measured_at'  => ['required'],
+            'category'  => ['required'],
+            'measured_at'  => ['required', 'date'],
+            'measured_by'  => ['required', 'string', 'max:255'],
             'measurement_details'  => ['required'],
-            'notes'  => ['required', 'string', 'nullable'],
+            'notes'  => ['nullable', 'string'],
         ];
     }
+	
+	public function messages(): array
+	{
+		return [
+			'customer_id.required'         => 'Kolom pelanggan wajib diisi.',
+			'clothing_type_id.required'    => 'Kolom jenis pakaian wajib diisi.',
+			'category.required'             => 'Kolom katagory pakaian wajib dipilih.',
+			'measured_at.required'         => 'Tanggal pengukuran wajib diisi.',
+			
+			'measured_by.required'         => 'Kolom diukur oleh wajib diisi.',
+			'measured_by.string'           => 'Kolom diukur oleh harus berupa teks.',
+			'measured_by.max'              => 'Kolom diukur oleh tidak boleh lebih dari :max karakter.',
+			
+			'measured_at.required'         => 'Tanggal pengukuran wajib diisi.',
+			'measured_at.date'     			=> 'Format tanggal pengukuran tidak valid.',
+			
+			'measurement_details.required' 	=> 'Kolo Bagian yang perlu wajib diisi.',
+			
+			'notes.string'                 => 'Catatan harus berupa teks atau string.',
+		];
+	}
+
 }

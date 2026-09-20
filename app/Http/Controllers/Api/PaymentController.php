@@ -21,10 +21,16 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $fields = ['id', 'user_id', 'order_id', 'payment_date', 'amount_paid', 'payment_method', 'payment_status', 'notes', 'created_at'];
+		
+		
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', null);
 
-        $payments = $this->paymentService->getAll($request->month, $request->year, $request->search, $fields);
+        $payments = $this->paymentService->getAll($perPage, $request->month, $request->year, $request->search, $fields);
+		
+		return response()->json($payments, 200);
 
-        return response()->json(PaymentResource::collection($payments));
+        // return response()->json(PaymentResource::collection($payments));
     }
 
     public function show(string $hashedId){

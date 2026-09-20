@@ -20,7 +20,7 @@ class MeasurementHistoryController extends Controller
 
     public function index()
     {
-        $fields = ['id', 'clothing_type_id', 'tailor_id', 'customer_id', 'measured_at', 'notes', 'measurement_details'];
+        $fields = ['id', 'category', 'customer_id', 'clothing_type_id', 'measured_at', 'measured_by', 'notes', 'measurement_details'];
 
         $measurementHistories = $this->measurementHistoryService->getAll($fields);
 
@@ -29,7 +29,7 @@ class MeasurementHistoryController extends Controller
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'clothing_type_id', 'tailor_id', 'customer_id', 'measured_at', 'notes', 'measurement_details'];
+            $fields = ['id', 'category', 'customer_id', 'clothing_type_id', 'measured_at', 'measured_by', 'notes', 'measurement_details'];
 
             $measurementHistory = $this->measurementHistoryService->getByHashedId($hashedId, $fields);
 
@@ -41,11 +41,25 @@ class MeasurementHistoryController extends Controller
         }
     }
 
-    public function getByCustomerAndClothing(Request $request){
+    public function getByCustomer(Request $request){
         try {
-            $fields = ['id', 'clothing_type_id', 'tailor_id', 'customer_id', 'measured_at', 'notes', 'measurement_details'];
+            $fields = ['id', 'category', 'customer_id', 'clothing_type_id', 'measured_at', 'measured_by', 'notes', 'measurement_details'];
 
-            $measurementHistories = $this->measurementHistoryService->getByCustomerAndClothing($request->customerId, $request->clothingTypeId, $fields);
+            $measurementHistories = $this->measurementHistoryService->getByCustomerAndClothing($request->customerId, $fields);
+
+            return response()->json(new MeasurementHistoryResource(['measurement_histories' => $measurementHistories]));
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Data ukuran pelanggan tidak ditemukan'
+            ], 404);
+        }
+    }
+
+    public function getByCustomerAndClothingType(Request $request){
+        try {
+            $fields = ['id', 'category', 'customer_id', 'clothing_type_id', 'measured_at', 'measured_by', 'notes', 'measurement_details'];
+
+            $measurementHistories = $this->measurementHistoryService->getByCustomerAndClothingType($request->customerId, $request->clothingTypeId, $fields);
 
             return response()->json(new MeasurementHistoryResource(['measurement_histories' => $measurementHistories]));
         } catch (ModelNotFoundException $e) {

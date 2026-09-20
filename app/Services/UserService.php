@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use App\Notifications\PasswordChangedNotification;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class UserService
 {
@@ -35,6 +39,31 @@ class UserService
             throw new \InvalidArgumentException("ID tidak valid.");
         }
         // return $this->userRepository->getById($hasedId, $fields ?? ['*']);
+    }
+
+    public function findByHashedId(string $hashedId)
+    {
+        try {
+            $decryptedId = Crypt::decryptString($hashedId);
+            
+            return $this->userRepository->findById((int) $decryptedId);
+            
+        } catch (DecryptException $e) {
+            throw new \InvalidArgumentException("ID tidak valid.");
+        }
+    }
+
+    public function changePassword(User $user, array $data): void
+    {
+        if (!Hash::check($data['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Password lama yang Anda masukkan salah.']
+            ]);
+        }
+
+        $this->userRepository->updatePassword($user, $data['password']);
+        
+        $user->notify(new PasswordChangedNotification());
     }
 
     public function create(array $data)

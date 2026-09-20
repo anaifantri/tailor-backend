@@ -18,14 +18,19 @@ class OrderService
         $this->orderRepository = $orderRepository;
     }
 
-    public function getAll(int $month, int $year, ?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, int $month, int $year, ?string $search = null, array $fields)
     {
-        return $this->orderRepository->getAll($month, $year, $search, $fields);
+        return $this->orderRepository->getAll($perPage, $month, $year, $search, $fields);
     }
 
     public function getUnpaid(?string $search = null, array $fields)
     {
         return $this->orderRepository->getUnpaid($search, $fields);
+    }
+
+    public function getBySearch(?string $search = null, array $fields)
+    {
+        return $this->orderRepository->getBySearch($search, $fields);
     }
 
     public function getByMonthYearAndSearch(int $month, int $year, ?string $search = null, array $fields)
@@ -53,15 +58,15 @@ class OrderService
         }
 
         return DB::transaction(function () use ($data, $customerId, $userId) { 
-            $lastOrder = $this->orderRepository->getLatestByNumber();
-            if(!$lastOrder){
-                $number = 1;
-            }else{
-                $number = (int) $lastOrder->number + 1;
-            }
-            $newOrderNumber = str_pad($number, 7, '0', STR_PAD_LEFT);
+            //$lastOrder = $this->orderRepository->getLatestByNumber();
+            //if(!$lastOrder){
+              //  $number = 1;
+            //}else{
+              //  $number = (int) $lastOrder->number + 1;
+            //}
+            //$newOrderNumber = str_pad($number, 7, '0', STR_PAD_LEFT);
 
-            $data['number'] = $newOrderNumber;
+            //$data['number'] = $newOrderNumber;
             $data['customer_id'] = $customerId;
             $data['user_id'] = $userId;
 
@@ -73,7 +78,6 @@ class OrderService
                 foreach ($data['order_details'] as $item) {
                     try {
                         $clothingTypeId = (int) Crypt::decryptString($item['clothing_type_id']);
-                        $measurementHistoryId = (int) Crypt::decryptString($item['measurement_history_id']);
                         $materialId = !empty($item['material_id']) 
                             ? (int) Crypt::decryptString($item['material_id']) 
                             : null;
@@ -85,11 +89,11 @@ class OrderService
                     $orderDetailsData[] = [
                         'clothing_type_id'            => $clothingTypeId,
                         'material_id'           => $materialId,
-                        'quantity'              => $item['qty'] ?? 1,
+                        'quantity'              => $item['quantity'] ?? 1,
                         'price'                 => $item['price'] ?? 0,
                         'fabric_consumed_meter' => $item['fabric_consumed_meter'] ?? 0,
-                        'measurement_history_id' => $measurementHistoryId,
                         'notes'                 => $item['notes'] ?? null,
+                        'measurements'          => $item['measurements'],
                         'created_at'            => now(),
                         'updated_at'            => now(),
                     ];

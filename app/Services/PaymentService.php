@@ -16,9 +16,9 @@ class PaymentService
         $this->paymentRepository = $paymentRepository;
     }
 
-    public function getAll(int $month, int $year, ?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, int $month, int $year, ?string $search = null, array $fields)
     {
-        return $this->paymentRepository->getAll($month, $year, $search, $fields);
+        return $this->paymentRepository->getAll($perPage, $month, $year, $search, $fields);
     }
 
     public function getByHashedId(string $hashedId, array $fields)

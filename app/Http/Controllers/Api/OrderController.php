@@ -20,16 +20,33 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
+        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
+		
+		
+        $perPage = $request->query('per_page', 10);
+        $search = $request->query('search', null);
 
-        $orders = $this->orderService->getAll($request->month, $request->year, $request->search, $fields);
+        $orders = $this->orderService->getAll($perPage, $request->month, $request->year, $request->search, $fields);
+		
+		return response()->json($orders, 200);
 
-        return response()->json(OrderResource::collection($orders));
+        //return response()->json(OrderResource::collection($orders));
+    }
+	
+    public function getBySearch(Request $request)
+    {
+        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
+		
+
+        $orders = $this->orderService->getBySearch($request->search, $fields);
+
+        
+		return response()->json(OrderResource::collection($orders));
     }
 
     public function unpaid(Request $request)
     {
-        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
+        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
 
         $orders = $this->orderService->getUnpaid($request->search, $fields);
 
@@ -38,7 +55,7 @@ class OrderController extends Controller
 
     public function show(string $hashedId){
         try {
-            $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'created_at'];
+            $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
 
             $order = $this->orderService->getByHashedId($hashedId, $fields);
 

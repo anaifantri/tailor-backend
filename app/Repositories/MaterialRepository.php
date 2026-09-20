@@ -6,8 +6,8 @@ use App\Models\Material;
 
 class MaterialRepository
 {
-    public function getAll(?string $search = null, array $fields){
-        return Material::select($fields)->search($search)->latest()->paginate(10);
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields){
+        return Material::select($fields)->search($search)->latest()->paginate($perPage);
     }
 
     public function getById(int $id, array $fields)

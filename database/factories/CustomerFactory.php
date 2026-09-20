@@ -21,7 +21,7 @@ class CustomerFactory extends Factory
             'code' => 'CUST-' . $faker->unique()->numerify('#####'),
             'name' => $faker->name,
             'email' => $faker->unique()->safeEmail,
-            'phone' => $faker->phoneNumber,
+            'phone' => '08' . $faker->numerify('##########'),
             'address' => $faker->address,
         ];
     }

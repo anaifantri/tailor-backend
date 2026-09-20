@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UpdateUserRequest;
+// use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -11,8 +11,10 @@ use App\Services\UserService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -34,7 +36,7 @@ class UserController extends Controller
 		
 		return response()->json($users, 200);
 
-        return response()->json(UserResource::collection($users));
+        // return response()->json(UserResource::collection($users));
     }
 
     public function show(string $hashedId){
@@ -66,22 +68,33 @@ class UserController extends Controller
     {
         $user = User::findOrFail($request->route('id'));
 
-        // Validasi kecocokan hash email
         if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
             return response()->json(['message' => 'Tautan verifikasi tidak valid.'], 403);
         }
 
-        // Cek jika sudah terverifikasi sebelumnya
         if ($user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email sudah terverifikasi sebelumnya.']);
         }
 
-        // Tandai email sebagai terverifikasi
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
         return response()->json(['message' => 'Email berhasil diverifikasi!']);
+    }
+    
+    public function changePassword(Request $request): JsonResponse
+    {
+        $validatedData = $request->validate([
+            'current_password' => ['required'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $this->userService->changePassword($request->user(), $validatedData);
+
+        return response()->json([
+            'message' => 'Password berhasil diperbarui. Anda telah keluar secara otomatis.'
+        ], 200);
     }
 
     public function store(UserRequest $request)
@@ -101,9 +114,9 @@ class UserController extends Controller
         
         $token = $user->createToken('riori')->plainTextToken;
         return response()->json(new UserResource([
-            'message' => 'Registrasi berhasil. Silakan cek email Anda untuk verifikasi.',
+            'message' => 'Penambahan pengguna baru berhasil..!!',
             'user' => $user, 
-            'token' => $token
+            //'token' => $token
             ]), 201);
     }
 
@@ -136,9 +149,10 @@ class UserController extends Controller
     public function destroy(string $hashedId)
     {
         try {
+			$user = $this->userService->findByHashedId($hashedId);
             $this->userService->delete($hashedId);
             return response()->json([
-                'message' => 'User delete successfuly'
+                'message' => 'Berhasil menghapus data user dengan nama ' . $user->name,
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([

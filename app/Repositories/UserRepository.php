@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class UserRepository 
 {
@@ -12,6 +13,17 @@ class UserRepository
 
     public function getById(int $id, array $fields){
         return User::select($fields)->findOrFail($id);
+    }
+
+    public function findById(int $id){
+        return User::findOrFail($id);
+    }
+    
+    public function updatePassword(User $user, string $newPassword): bool
+    {
+        return $user->update([
+            'password' => Hash::make($newPassword)
+        ]);
     }
 
     public function create(array $data){

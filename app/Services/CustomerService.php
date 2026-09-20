@@ -24,10 +24,10 @@ class CustomerService
     {
         try {
             $decryptedId = Crypt::decryptString($hashedId);
-            return $this->customerRepository->getById((int) $decryptedId, $fields ?? ['*']);
         } catch (DecryptException $e) {
             throw new \InvalidArgumentException("ID tidak valid.");
         }
+            return $this->customerRepository->getById((int) $decryptedId, $fields ?? ['*']);
     }
 
     public function create(array $data)

@@ -45,11 +45,6 @@ class TailorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // 'code' => [
-            //     'required',
-            //     'string',
-            //     Rule::unique('tailors', 'code')->ignore($this->id), 
-            // ],
             'name'  => ['required', 'string', 'max:255'],
             'is_active'  => ['required'],
             'email' => [
@@ -57,10 +52,12 @@ class TailorRequest extends FormRequest
                 'email:rfc,dns',
                 Rule::unique('tailors', 'email')->ignore($this->id),
                 ],
-            'phone'  => [
-                    'required',
-                    Rule::unique('tailors', 'phone')->ignore($this->id),
-                ],
+			'phone'     => [
+				'required',
+				'string',
+				'regex:/^(\+62|62|0)[0-9]{9,12}$/',
+				Rule::unique('tailors', 'phone')->ignore($this->id),
+			],
             'address' => [
                     'nullable',
                     ],
@@ -75,4 +72,34 @@ class TailorRequest extends FormRequest
                     ],
         ];
     }
+	
+	public function messages(): array
+	{
+		return [
+			// Name
+			'name.required'     => 'Nama lengkap wajib diisi.',
+			'name.string'       => 'Nama harus berupa teks.',
+			'name.max'          => 'Nama tidak boleh lebih dari 255 karakter.',
+
+			// Email
+			'email.email'       => 'Format alamat email tidak valid.',
+			'email.dns'         => 'Domain email tidak valid atau tidak terdaftar.',
+			'email.unique'      => 'Alamat email ini sudah terdaftar.',
+
+			// Phone
+			'phone.required'    => 'Nomor telepon wajib diisi.',
+			'phone.string'      => 'Nomor telepon harus berupa teks.',
+			'phone.regex'       => 'Format nomor telepon tidak valid (gunakan format Indonesia yang benar).',
+			'phone.unique'      => 'Nomor telepon ini sudah terdaftar.',
+
+			// Photo
+			'photo.image'       => 'File harus berupa gambar.',
+			'photo.mimes'       => 'Format gambar harus jpeg, jpg, atau png.',
+			'photo.max'         => 'Ukuran gambar tidak boleh lebih dari 1 MB (1024 KB).',
+
+			// Is Active
+			'is_active.required'=> 'Status aktif wajib dipilih.',
+			'is_active.boolean' => 'Status aktif harus bernilai benar atau salah.',
+		];
+	}
 }
