@@ -7,85 +7,102 @@ use App\Http\Requests\PaymentRequest;
 use App\Http\Resources\PaymentResource;
 use App\Services\PaymentService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    private $paymentService;
+    protected PaymentService $paymentService;
 
     public function __construct(PaymentService $paymentService)
     {
         $this->paymentService = $paymentService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $fields = ['id', 'user_id', 'order_id', 'payment_date', 'amount_paid', 'payment_method', 'payment_status', 'notes', 'created_at'];
-		
-		
-        $perPage = $request->query('per_page', 10);
-        $search = $request->query('search', null);
+        $perPage = (int) $request->query('per_page', 10);
+        $search  = $request->query('search');
+        $month   = $request->query('month');
+        $year    = $request->query('year');
 
-        $payments = $this->paymentService->getAll($perPage, $request->month, $request->year, $request->search, $fields);
-		
-		return response()->json($payments, 200);
+        $payments = $this->paymentService->getAll($perPage, $month, $year, $search);
 
-        // return response()->json(PaymentResource::collection($payments));
+        return response()->json([
+            'status' => 'success',
+            'data'   => PaymentResource::collection($payments),
+            'meta'   => [
+                'current_page' => $payments->currentPage(),
+                'last_page'    => $payments->lastPage(),
+                'per_page'     => $payments->perPage(),
+                'total'        => $payments->total(),
+            ],
+        ]);
     }
 
-    public function show(string $hashedId){
-        try {
-            $fields = ['id', 'user_id', 'order_id', 'payment_date', 'amount_paid', 'payment_method', 'payment_status', 'notes', 'created_at'];
-
-            $payment = $this->paymentService->getByHashedId($hashedId, $fields);
-
-            return response()->json(new PaymentResource(['payment' => $payment]));
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Data pembayaran tidak ditemukan'
-            ], 404);
-        }
-    }
-
-    public function store(PaymentRequest $request)
-    {
-        $validateData = $request->validated();
-
-        $payment = $this->paymentService->create($validateData);
-
-        return response()->json(new PaymentResource([
-            'message' => 'Input data pembayaran berhasil',
-            'payment' => $payment
-            ]), 201);
-    }
-
-    public function update(PaymentRequest $request, string $hashedId)
+    public function show(string $ulid): JsonResponse
     {
         try {
-            $validateData = $request->validated();
-            
-            $payment = $this->paymentService->update($request->id, $validateData);
-            
-            return response()->json(new PaymentResource([
-			'payment' => $payment,
-			'message' => 'Edit data pembayaran berhasil']));
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Data pembayaran tidak ditemukan'
-            ], 404);
-        }
-    }
+            $payment = $this->paymentService->getByUlid($ulid);
 
-    public function destroy(string $hashedId)
-    {
-        try {
-            $this->paymentService->delete($hashedId);
             return response()->json([
-                'message' => 'Hapus data pembayaran berhasil..!!'
+                'status' => 'success',
+                'data'   => new PaymentResource($payment),
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
-                'message' => 'Data pembayaran tidak ditemukan'
+                'status'  => 'error',
+                'message' => 'Data pembayaran tidak ditemukan.',
+            ], 404);
+        }
+    }
+
+    public function store(PaymentRequest $request): JsonResponse
+    {
+        $validatedData = $request->validated();
+
+        $payment = $this->paymentService->create($validatedData);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Input data pembayaran berhasil.',
+            'data'    => new PaymentResource($payment),
+        ], 201);
+    }
+
+    public function update(PaymentRequest $request, string $ulid): JsonResponse
+    {
+        try {
+            $validatedData = $request->validated();
+
+            $payment = $this->paymentService->update($ulid, $validatedData);
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Edit data pembayaran berhasil.',
+                'data'    => new PaymentResource($payment),
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data pembayaran tidak ditemukan.',
+            ], 404);
+        }
+    }
+
+    public function destroy(string $ulid): JsonResponse
+    {
+        try {
+            $this->paymentService->delete($ulid);
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Hapus data pembayaran berhasil.',
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data pembayaran tidak ditemukan.',
             ], 404);
         }
     }

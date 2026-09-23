@@ -7,38 +7,38 @@ use App\Http\Requests\MaterialRequest;
 use App\Http\Resources\MaterialResource;
 use App\Services\MaterialService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MaterialController extends Controller
 {
-    private $materialService;
+    private MaterialService $materialService;
 
     public function __construct(MaterialService $materialService)
     {
         $this->materialService = $materialService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $fields = ['id', 'code', 'name', 'description', 'photo', 'unit', 'stock', 'initial_stock'];
-		
-        $perPage = $request->query('per_page', 10);
-        $search = $request->query('search', null);
+        $fields = ['ulid', 'code', 'name', 'description', 'photo', 'unit', 'stock', 'initial_stock'];
+
+        $perPage = (int) $request->query('per_page', 10);
+        $search = $request->query('search');
 
         $materials = $this->materialService->getAll($perPage, $search, $fields);
-		
-		return response()->json($materials, 200);
 
-        //return response()->json(MaterialResource::collection($materials));
+        return response()->json($materials, 200);
     }
 
-    public function show(string $hashedId){
+    public function show(string $ulid): JsonResponse
+    {
         try {
-            $fields = ['id', 'code', 'name', 'description', 'photo', 'unit', 'stock', 'initial_stock'];
+            $fields = ['ulid', 'code', 'name', 'description', 'photo', 'unit', 'stock', 'initial_stock'];
 
-            $material = $this->materialService->getByHashedId($hashedId, $fields);
+            $material = $this->materialService->getByUlid($ulid, $fields);
 
-            return response()->json(new MaterialResource(['material' => $material]));
+            return response()->json(new MaterialResource(['material' => $material]), 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data bahan tidak ditemukan'
@@ -46,26 +46,26 @@ class MaterialController extends Controller
         }
     }
 
-    public function store(MaterialRequest $request)
+    public function store(MaterialRequest $request): JsonResponse
     {
-        $validateData = $request->validated();
+        $validatedData = $request->validated();
 
-        $material = $this->materialService->create($validateData);
+        $material = $this->materialService->create($validatedData);
 
         return response()->json(new MaterialResource([
             'message' => 'Pendaftaran bahan baru berhasil',
             'material' => $material
-            ]), 201);
+        ]), 201);
     }
 
-    public function update(MaterialRequest $request, string $hashedId)
+    public function update(MaterialRequest $request, string $ulid): JsonResponse
     {
         try {
-            $validateData = $request->validated();
-            
-            $material = $this->materialService->update($request->id, $validateData);
-            
-            return response()->json(new MaterialResource($material));
+            $validatedData = $request->validated();
+
+            $material = $this->materialService->update($ulid, $validatedData);
+
+            return response()->json(new MaterialResource($material), 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data bahan tidak ditemukan'
@@ -73,13 +73,14 @@ class MaterialController extends Controller
         }
     }
 
-    public function destroy(string $hashedId)
+    public function destroy(string $ulid): JsonResponse
     {
         try {
-            $this->materialService->delete($hashedId);
+            $this->materialService->delete($ulid);
+
             return response()->json([
                 'message' => 'Hapus data bahan berhasil..!!'
-            ]);
+            ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data bahan tidak ditemukan'

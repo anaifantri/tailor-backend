@@ -3,55 +3,38 @@
 namespace App\Services;
 
 use App\Repositories\ProductionProgressRepository;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Support\Facades\Crypt;
 
 class ProductionProgressService
 {
-    private $productionProgressRepository;
+    protected ProductionProgressRepository $repository;
 
-    public function __construct(ProductionProgressRepository $productionProgressRepository)
+    public function __construct(ProductionProgressRepository $repository)
     {
-        $this->productionProgressRepository = $productionProgressRepository;
+        $this->repository = $repository;
     }
 
-    public function getByOrderDetailAndTailor(int $orderDetailId, int $tailorId)
+    public function getByOrderDetailUlid(string $orderDetailUlid)
     {
-        $productionProgress = $this->productionProgressRepository->getByOrderDetailAndTailor($orderDetailId, $tailorId);
-            
-        return $productionProgress;
+        return $this->repository->getByOrderDetailUlid($orderDetailUlid);
     }
 
-    public function getByHashedId(string $hashedId, array $fields)
+    public function getByUlid(string $ulid)
     {
-        try {
-            $decryptedId = Crypt::decryptString($hashedId);
-            return $this->productionProgressRepository->getById((int) $decryptedId, $fields ?? ['*']);
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
+        return $this->repository->getByUlid($ulid);
     }
 
     public function create(array $data)
     {
-        try {
-            $orderDetailId = (int) Crypt::decryptString($data['order_detail_id']);
-        } catch (DecryptException $e) {
-            throw new DecryptException("Data detail pesanan tidak valid.");
-        }
-        $data['order_detail_id'] = $orderDetailId;
-        return $this->productionProgressRepository->create($data);
+        return $this->repository->create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data)
     {
-        return $this->productionProgressRepository->update($id, $data);
+        return $this->repository->update($ulid, $data);
     }
 
-    public function delete(string $hashedId)
+    public function delete(string $ulid)
     {
-        $decryptedId = Crypt::decryptString($hashedId);
-
-        return $this->productionProgressRepository->delete((int) $decryptedId);
+        return $this->repository->delete($ulid);
     }
 }

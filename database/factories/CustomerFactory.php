@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Customer>
@@ -16,13 +17,13 @@ class CustomerFactory extends Factory
      */
     public function definition(): array
     {
-        $faker = \Faker\Factory::create('id_ID'); 
         return [
-            'code' => 'CUST-' . $faker->unique()->numerify('#####'),
-            'name' => $faker->name,
-            'email' => $faker->unique()->safeEmail,
-            'phone' => '08' . $faker->numerify('##########'),
-            'address' => $faker->address,
+            'ulid' => (string) Str::ulid(), // Opsional: trait HasUlids juga akan menanganinya jika dikosongkan
+            'code' => 'CUST-' . $this->faker->unique()->numerify('#####'),
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'phone' => '08' . $this->faker->numerify('##########'),
+            'address' => $this->faker->address(),
         ];
     }
 }

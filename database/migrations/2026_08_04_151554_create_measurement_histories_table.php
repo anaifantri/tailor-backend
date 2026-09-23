@@ -13,8 +13,22 @@ return new class extends Migration
     {
         Schema::create('measurement_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained()->onDelete('cascade');
-            $table->foreignId('clothing_type_id')->nullable()->constrained('clothing_types')->onDelete('set null');
+            $table->ulid('ulid')->unique();
+            
+            // Relasi ke Customer & ClothingType menggunakan ULID
+            $table->foreignUlid('customer_ulid')
+                  ->constrained('customers', 'ulid')
+                  ->cascadeOnDelete();
+
+            $table->foreignUlid('clothing_type_ulid')
+                  ->nullable()
+                  ->constrained('clothing_types', 'ulid')
+                  ->nullOnDelete();
+
+            // Foreign Key Internal (Auto-Increment) untuk performa join DB
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
+            $table->foreignId('clothing_type_id')->nullable()->constrained('clothing_types')->nullOnDelete();
+
             $table->string('category');
             $table->string('measured_by');
             $table->date('measured_at');

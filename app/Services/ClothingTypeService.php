@@ -2,64 +2,48 @@
 
 namespace App\Services;
 
+use App\Models\ClothingType;
 use App\Repositories\ClothingTypeRepository;
-use Exception;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ClothingTypeService
 {
-    private $clothingTypeRepository;
+    private ClothingTypeRepository $clothingTypeRepository;
 
     public function __construct(ClothingTypeRepository $clothingTypeRepository)
     {
         $this->clothingTypeRepository = $clothingTypeRepository;
     }
 
-    public function getAll(int $perPage = 10, ?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields = ['*']): LengthAwarePaginator
     {
         return $this->clothingTypeRepository->getAll($perPage, $search, $fields);
     }
 
-    public function getByHashedId(string $hashedId, array $fields)
+    public function getByUlid(string $ulid, array $fields = ['*']): ClothingType
     {
-        try {
-            $decryptedId = Crypt::decryptString($hashedId);
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
-		
-            return $this->clothingTypeRepository->getById((int) $decryptedId, $fields ?? ['*']);
+        return $this->clothingTypeRepository->getByUlid($ulid, $fields);
     }
 
-    public function create(array $data)
+    public function create(array $data): ClothingType
     {
         return DB::transaction(function () use ($data) { 
-            $clothingType = $this->clothingTypeRepository->create($data);
-                
-            return $clothingType;
+            return $this->clothingTypeRepository->create($data);
         });
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data): ClothingType
     {
-        return DB::transaction(function () use ($id, $data) {
-            $clothingType = $this->clothingTypeRepository->update($id, $data);
-
-            return $clothingType;
+        return DB::transaction(function () use ($ulid, $data) {
+            return $this->clothingTypeRepository->update($ulid, $data);
         });
     }
 
-    public function delete(string $hashedId)
+    public function delete(string $ulid): void
     {
-        try {
-            $clothingTypeId = (int) Crypt::decryptString($hashedId);
-        } catch (Exception $e) {
-            throw new Exception("Data jenis pakaian tidak valid.");
-        }
-        return DB::transaction(function () use ($clothingTypeId) {
-            return $this->clothingTypeRepository->delete($clothingTypeId);
+        DB::transaction(function () use ($ulid) {
+            $this->clothingTypeRepository->delete($ulid);
         });
     }
 }

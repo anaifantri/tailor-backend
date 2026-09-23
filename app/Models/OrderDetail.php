@@ -2,17 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderDetail extends Model
 {
-    protected $appends = ['hashed_id'];
+    use HasFactory, HasUlids;
+
     protected $fillable = [
+        'ulid',
         'order_id',
+        'order_ulid',
         'clothing_type_id',
+        'clothing_type_ulid',
         'material_id',
+        'material_ulid',
         'quantity',
         'price',
         'fabric_consumed_meter',
@@ -20,32 +27,61 @@ class OrderDetail extends Model
         'notes',
     ];
     
-    protected $hidden = ['id'];
-    
-    protected function hashedId(): Attribute
+    protected $hidden = [
+        'id',
+        'order_id',
+        'clothing_type_id',
+        'material_id',
+    ];
+
+    protected $casts = [
+        'measurements' => 'array',
+        'price' => 'decimal:2',
+        'fabric_consumed_meter' => 'decimal:2',
+        'quantity' => 'integer',
+    ];
+
+    public function uniqueIds(): array
     {
-        return Attribute::make(
-            get: fn () => Crypt::encryptString($this->attributes['id'] ?? ''),
-        );
+        return ['ulid'];
     }
 
-    public function order(){
-        return $this->belongsTo(Order::class);
+    /* -------------------------------------------------------------------------- */
+    /*                                RELATIONSHIPS                               */
+    /* -------------------------------------------------------------------------- */
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'order_id');
     }
 
-    public function clothing_type(){
-        return $this->belongsTo(ClothingType::class);
+    public function clothingType(): BelongsTo
+    {
+        return $this->belongsTo(ClothingType::class, 'clothing_type_id');
     }
 
-    public function material(){
-        return $this->belongsTo(Material::class);
+    public function material(): BelongsTo
+    {
+        return $this->belongsTo(Material::class, 'material_id');
     }
 
-    public function production_progress(){
+    public function productionProgress(): HasMany
+    {
         return $this->hasMany(ProductionProgress::class, 'order_detail_id', 'id');
     }
 
-    public function tailor_assignments(){
+    public function tailorAssignments(): HasMany
+    {
         return $this->hasMany(TailorAssignment::class, 'order_detail_id', 'id');
+    }
+
+    public function orderDetailDeliveries(): HasMany
+    {
+        return $this->hasMany(OrderDetailDelivery::class, 'order_detail_id', 'id');
+    }
+
+    public function orderCancellations(): HasMany
+    {
+        return $this->hasMany(OrderCancellation::class, 'order_detail_id', 'id');
     }
 }

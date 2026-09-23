@@ -7,67 +7,80 @@ use App\Http\Requests\ProductionProgressRequest;
 use App\Http\Resources\ProductionProgressResource;
 use App\Services\ProductionProgressService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 
 class ProductionProgressController extends Controller
 {
-    private $productionProgressService;
+    protected ProductionProgressService $service;
 
-    public function __construct(ProductionProgressService $productionProgressService)
+    public function __construct(ProductionProgressService $service)
     {
-        $this->productionProgressService = $productionProgressService;
+        $this->service = $service;
     }
 
-    public function show(string $hashedId){
-        try {
-            $fields = ['id', 'tailor_id', 'order_detail_id', 'status', 'notes', 'created_at'];
-
-            $productionProgress = $this->productionProgressService->getByHashedId($hashedId, $fields);
-
-            return response()->json(new ProductionProgressResource(['production_progress' => $productionProgress]));
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Data progress pengerjaan tidak ditemukan'
-            ], 404);
-        }
-    }
-
-    public function store(ProductionProgressRequest $request)
-    {
-        $validateData = $request->validated();
-
-        $productionProgress = $this->productionProgressService->create($validateData);
-
-        return response()->json(new ProductionProgressResource([
-            'message' => 'Progress Pengerjaan berhasil ditambahkan',
-            'production_progress' => $productionProgress
-            ]), 201);
-    }
-
-    public function update(ProductionProgressRequest $request, string $hashedId)
+    public function show(string $ulid): JsonResponse
     {
         try {
-            $validateData = $request->validated();
-            
-            $productionProgress = $this->productionProgressService->update($request->id, $validateData);
-            
-            return response()->json(new ProductionProgressResource($productionProgress));
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Data progress pengerjaan tidak ditemukan'
-            ], 404);
-        }
-    }
+            $progress = $this->service->getByUlid($ulid);
 
-    public function destroy(string $hashedId)
-    {
-        try {
-            $this->productionProgressService->delete($hashedId);
             return response()->json([
-                'message' => 'Hapus data progress pengerjaan berhasil..!!'
+                'status' => 'success',
+                'data' => new ProductionProgressResource($progress),
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
-                'message' => 'Data progress pengerjaan tidak ditemukan'
+                'status' => 'error',
+                'message' => 'Data progress pengerjaan tidak ditemukan.',
+            ], 404);
+        }
+    }
+
+    public function store(ProductionProgressRequest $request): JsonResponse
+    {
+        $validatedData = $request->validated();
+
+        $progress = $this->service->create($validatedData);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Progress pengerjaan berhasil ditambahkan.',
+            'data' => new ProductionProgressResource($progress),
+        ], 201);
+    }
+
+    public function update(ProductionProgressRequest $request, string $ulid): JsonResponse
+    {
+        try {
+            $validatedData = $request->validated();
+
+            $progress = $this->service->update($ulid, $validatedData);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pembaruan progress pengerjaan berhasil.',
+                'data' => new ProductionProgressResource($progress),
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data progress pengerjaan tidak ditemukan.',
+            ], 404);
+        }
+    }
+
+    public function destroy(string $ulid): JsonResponse
+    {
+        try {
+            $this->service->delete($ulid);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Hapus data progress pengerjaan berhasil.',
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data progress pengerjaan tidak ditemukan.',
             ], 404);
         }
     }

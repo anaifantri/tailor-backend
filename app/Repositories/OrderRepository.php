@@ -3,57 +3,68 @@
 namespace App\Repositories;
 
 use App\Models\Order;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class OrderRepository
 {
-    public function getAll(int $perPage = 10, int $month, int $year, ?string $search = null, array $fields)
+    private array $defaultWith = [
+        'customer',
+        'user',
+        'orderDetails.clothingType',
+        'orderDetails.material',
+        'orderDetails.productionProgress',
+        'payments'
+    ];
+
+    public function getAll(int $perPage = 10, mixed $month = null, ?int $year = null, ?string $search = null): LengthAwarePaginator
     {
-        return Order::select($fields)->byMonthYear($month, $year)->search($search)->with(['order_details','order_details.clothing_type', 'order_details.production_progress','order_details.material','payments', 'customer'])->latest()->paginate($perPage);
+        return Order::with($this->defaultWith)
+            ->byMonthYear($month, $year)
+            ->search($search)
+            ->latest()
+            ->paginate($perPage);
     }
 
-    public function getUnpaid(?string $search = null, array $fields)
+    public function getUnpaid(?string $search = null)
     {
-        return Order::select($fields)->search($search)->unpaid()->with(['order_details','order_details.clothing_type', 'order_details.production_progress','order_details.material','payments', 'customer'])->latest()->get();
+        return Order::with($this->defaultWith)
+            ->search($search)
+            ->unpaid()
+            ->latest()
+            ->get();
     }
 
-    public function getLatestByNumber()
+    public function getBySearch(?string $search = null)
     {
-        return Order::orderBy('number', 'desc')->latest()->first();
+        return Order::with($this->defaultWith)
+            ->search($search)
+            ->latest()
+            ->get();
     }
 
-    public function getBySearch(?string $search = null, array $fields)
+    public function getByUlid(string $ulid): Order
     {
-        return Order::select($fields)->search($search)->latest()->get();
+        return Order::with($this->defaultWith)
+            ->where('ulid', $ulid)
+            ->firstOrFail();
     }
 
-    public function getById(int $id, array $fields)
-    {
-        return Order::select($fields)->with(['order_details','order_details.clothing_type', 'order_details.production_progress','order_details.material','payments', 'customer'])->findOrFail($id);
-    }
-
-    public function findById(int $id): ?Order
-    {
-        return Order::find($id); 
-    }
-
-    public function create(array $data)
+    public function create(array $data): Order
     {
         return Order::create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data): Order
     {
-        $order = Order::findOrFail($id);
-
+        $order = $this->getByUlid($ulid);
         $order->update($data);
 
-        return $order;
+        return $order->fresh($this->defaultWith);
     }
 
-    public function delete(int $id)
+    public function delete(string $ulid): bool
     {
-        $order = Order::findOrFail($id);
-
-        $order->delete();
+        $order = $this->getByUlid($ulid);
+        return $order->delete();
     }
 }

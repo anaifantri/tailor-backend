@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('tailors', function (Blueprint $table) {
             $table->id();
+            $table->ulid('ulid')->unique();
             $table->string('code')->unique();
             $table->json('specialty')->nullable();
             $table->string('name');
@@ -20,7 +21,7 @@ return new class extends Migration
             $table->string('phone')->unique();
             $table->string('email')->nullable()->unique();
             $table->string('photo')->nullable();
-            $table->boolean('is_active');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

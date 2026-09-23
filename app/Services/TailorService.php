@@ -2,93 +2,89 @@
 
 namespace App\Services;
 
+use App\Models\Tailor;
 use App\Repositories\TailorRepository;
-use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
 class TailorService
 {
-    private $tailorRepository;
+    private TailorRepository $tailorRepository;
 
     public function __construct(TailorRepository $tailorRepository)
     {
         $this->tailorRepository = $tailorRepository;
     }
 
-    public function getAll(int $perPage = 10, ?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields = ['*']): LengthAwarePaginator
     {
         return $this->tailorRepository->getAll($perPage, $search, $fields);
     }
 
-    public function getByHashedId(string $hashedId, array $fields)
+    public function getByUlid(string $ulid, array $fields = ['*']): Tailor
     {
-        try {
-            $decryptedId = Crypt::decryptString($hashedId);
-            return $this->tailorRepository->getById((int) $decryptedId, $fields ?? ['*']);
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
+        return $this->tailorRepository->getByUlid($ulid, $fields);
     }
 
-    public function create(array $data)
+    public function findByUlid(string $ulid): Tailor
     {
-        $fields = ['id', 'code'];
+        return $this->tailorRepository->findByUlid($ulid);
+    }
+
+    public function create(array $data): Tailor
+    {
         $lastTailor = $this->tailorRepository->getLatestByCode();
-        if(!$lastTailor){
+        if (!$lastTailor) {
             $number = 1;
-        }else{
+        } else {
             $number = (int) substr($lastTailor->code, 4) + 1;
         }
-        $newTailorCode = 'TLR-' . str_pad($number, 3, '0', STR_PAD_LEFT);
+        
+        $data['code'] = 'TLR-' . str_pad((string) $number, 3, '0', STR_PAD_LEFT);
 
-        $data['code'] = $newTailorCode;
-
-        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile){
+        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
             $data['photo'] = $this->uploadPhoto($data['photo']);
         }
+
         return $this->tailorRepository->create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data): Tailor
     {
-        $fields = ['id', 'photo'];
-        $tailor = $this->tailorRepository->getById($id, $fields);
+        $tailor = $this->tailorRepository->findByUlid($ulid);
 
-        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile){
-            if(!empty($tailor->photo)){
-                $this->deletePhoto($tailor->photo);
+        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+            if ($tailor->getRawOriginal('photo')) {
+                $this->deletePhoto($tailor->getRawOriginal('photo'));
             }
 
             $data['photo'] = $this->uploadPhoto($data['photo']);
         }
 
-        return $this->tailorRepository->update($id, $data);
+        return $this->tailorRepository->update($ulid, $data);
     }
 
-    public function delete(string $hashedId)
+    public function delete(string $ulid): void
     {
-        $fields = ['id', 'photo'];
-        $decryptedId = Crypt::decryptString($hashedId);
-        $tailor = $this->tailorRepository->getById((int) $decryptedId, $fields);
+        $tailor = $this->tailorRepository->findByUlid($ulid);
 
-        if ($tailor->photo){
-            $this->deletePhoto($tailor->photo);
+        if ($tailor->getRawOriginal('photo')) {
+            $this->deletePhoto($tailor->getRawOriginal('photo'));
         }
 
-        return $this->tailorRepository->delete((int) $decryptedId);
+        $this->tailorRepository->delete($ulid);
     }
 
-    private function uploadPhoto(UploadedFile $photo)
+    private function uploadPhoto(UploadedFile $photo): string
     {
         return $photo->store('tailor-photo', 'public');
     }
 
-    private function deletePhoto(string $photoPath)
+    private function deletePhoto(string $photoPath): void
     {
-        $relativePath = 'tailor-photo/'. basename($photoPath);
-        if(Storage::disk('public')->exists($relativePath)){
+        $relativePath = 'tailor-photo/' . basename($photoPath);
+        if (Storage::disk('public')->exists($relativePath)) {
             Storage::disk('public')->delete($relativePath);
         }
     }

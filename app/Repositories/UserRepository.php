@@ -7,16 +7,19 @@ use Illuminate\Support\Facades\Hash;
 
 class UserRepository 
 {
-    public function getAll(int $perPage = 10, ?string $search = null, array $fields){
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields = ['*'])
+    {
         return User::select($fields)->search($search)->latest()->paginate($perPage);
     }
 
-    public function getById(int $id, array $fields){
-        return User::select($fields)->findOrFail($id);
+    public function getByUlid(string $ulid, array $fields = ['*'])
+    {
+        return User::select($fields)->where('ulid', $ulid)->firstOrFail();
     }
 
-    public function findById(int $id){
-        return User::findOrFail($id);
+    public function findByUlid(string $ulid)
+    {
+        return User::where('ulid', $ulid)->firstOrFail();
     }
     
     public function updatePassword(User $user, string $newPassword): bool
@@ -26,21 +29,22 @@ class UserRepository
         ]);
     }
 
-    public function create(array $data){
+    public function create(array $data)
+    {
         return User::create($data);
     }
 
-    public function update(int $id, array $data){
-        $user = User::findOrFail($id);
-
+    public function update(string $ulid, array $data)
+    {
+        $user = $this->findByUlid($ulid);
         $user->update($data);
 
         return $user;
     }
 
-    public function delete(int $id){
-        $user = User::findOrFail($id);
-
+    public function delete(string $ulid)
+    {
+        $user = $this->findByUlid($ulid);
         $user->delete();
         $user->tokens()->delete();
     }

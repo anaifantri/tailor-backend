@@ -13,11 +13,18 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            
-            $table->foreignId('user_id')->constrained();
-            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->ulid('ulid')->unique();
+
+            // Foreign Key ULID
+            $table->foreignUlid('user_ulid')->constrained('users', 'ulid')->cascadeOnDelete();
+            $table->foreignUlid('order_ulid')->constrained('orders', 'ulid')->cascadeOnDelete();
+
+            // Foreign Key Internal ID (BigInteger)
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+
             $table->date('payment_date');
-            $table->decimal('amount_paid', total: 12, places: 0)->default(0);
+            $table->decimal('amount_paid', 12, 2)->default(0.00);
             $table->string('payment_method');
             $table->string('payment_status');
             $table->text('notes')->nullable();

@@ -2,94 +2,88 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Encryption\DecryptException;
+use App\Models\Material;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 
 class MaterialRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
-    
+
     protected function prepareForValidation(): void
     {
-        $hashedId = $this->route('id'); 
+        $ulid = $this->route('ulid');
 
-        if ($hashedId) {
-            try {
-                $decryptedId = Crypt::decryptString($hashedId);
+        if ($ulid) {
+            $material = Material::where('ulid', $ulid)->first();
 
-                $this->merge([
-                    'id' => (int) $decryptedId,
-                ]);
-            } catch (DecryptException $e) {
+            if (!$material) {
                 abort(response()->json([
                     'status' => 'error',
-                    'message' => 'Format parameter ID tidak valid.'
+                    'message' => 'Format atau ID ULID material tidak valid.'
                 ], 400));
             }
+
+            $this->merge([
+                'material_internal_id' => $material->id,
+            ]);
         }
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
+        $internalId = $this->material_internal_id ?? null;
+
         return [
             'code' => [
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('materials', 'code')->ignore($this->material?->id ?? $this->id),
+                Rule::unique('materials', 'code')->ignore($internalId),
             ],
             'name'          => ['required', 'string', 'max:255'],
-            'initial_stock' => ['nullable', 'numeric', 'min:0'], 
-            'stock'         => ['nullable', 'numeric', 'min:0'], 
-            'description'   => ['nullable', 'string'],  
+            'initial_stock' => ['nullable', 'numeric', 'min:0'],
+            'stock'         => ['nullable', 'numeric', 'min:0'],
+            'description'   => ['nullable', 'string'],
             'unit'          => ['required', 'string', 'in:meter,yard,roll'],
-            'photo' => [
-                    'nullable',
-                    'image',
-                    'mimes:jpeg,jpg,png',
-                    'max:1024',
-                    ],
+            'photo'         => [
+                'nullable',
+                'image',
+                'mimes:jpeg,jpg,png',
+                'max:1024',
+            ],
         ];
-    }public function messages(): array
-{
-    return [
-        'code.required'         => 'Kode material wajib diisi.',
-        'code.string'           => 'Kode material harus berupa teks.',
-        'code.max'              => 'Kode material tidak boleh lebih dari :max karakter.',
-        'code.unique'           => 'Kode material sudah terdaftar di sistem.',
+    }
 
-        'name.required'         => 'Nama material wajib diisi.',
-        'name.string'           => 'Nama material harus berupa teks.',
-        'name.max'              => 'Nama material tidak boleh lebih dari :max karakter.',
+    public function messages(): array
+    {
+        return [
+            'code.required'         => 'Kode material wajib diisi.',
+            'code.string'           => 'Kode material harus berupa teks.',
+            'code.max'              => 'Kode material tidak boleh lebih dari :max karakter.',
+            'code.unique'           => 'Kode material sudah terdaftar di sistem.',
 
-        'initial_stock.numeric' => 'Stok awal harus berupa angka.',
-        'initial_stock.min'     => 'Stok awal tidak boleh kurang dari :min.',
+            'name.required'         => 'Nama material wajib diisi.',
+            'name.string'           => 'Nama material harus berupa teks.',
+            'name.max'              => 'Nama material tidak boleh lebih dari :max karakter.',
 
-        'stock.numeric'         => 'Stok harus berupa angka.',
-        'stock.min'             => 'Stok tidak boleh kurang dari :min.',
+            'initial_stock.numeric' => 'Stok awal harus berupa angka.',
+            'initial_stock.min'     => 'Stok awal tidak boleh kurang dari :min.',
 
-        'description.string'    => 'Deskripsi harus berupa teks.',
+            'stock.numeric'         => 'Stok harus berupa angka.',
+            'stock.min'             => 'Stok tidak boleh kurang dari :min.',
 
-        'unit.required'         => 'Satuan material wajib dipilih.',
-        'unit.in'               => 'Satuan yang dipilih harus berupa: meter, yard atau roll.',
+            'description.string'    => 'Deskripsi harus berupa teks.',
 
-        'photo.image'           => 'Berkas yang diunggah harus berupa gambar.',
-        'photo.mimes'           => 'Format gambar harus berupa: jpeg, jpg, atau png.',
-        'photo.max'             => 'Ukuran gambar tidak boleh lebih dari 1 MB (1024 KB).',
-    ];
-}
+            'unit.required'         => 'Satuan material wajib dipilih.',
+            'unit.in'               => 'Satuan yang dipilih harus berupa: meter, yard atau roll.',
 
+            'photo.image'           => 'Berkas yang diunggah harus berupa gambar.',
+            'photo.mimes'           => 'Format gambar harus berupa: jpeg, jpg, atau png.',
+            'photo.max'             => 'Ukuran gambar tidak boleh lebih dari 1 MB (1024 KB).',
+        ];
+    }
 }

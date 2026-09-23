@@ -3,18 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
-    protected $appends = ['hashed_id'];
+    use HasFactory, HasUlids;
+
     protected $fillable = [
+        'ulid',
         'number',
         'user_id',
+        'user_ulid',
         'customer_id',
+        'customer_ulid',
         'order_date',
         'fitting_date',
         'due_date',
@@ -23,8 +27,26 @@ class Order extends Model
         'total',
         'notes',
     ];
-    
-    protected $hidden = ['id'];
+
+    protected $hidden = [
+        'id',
+        'user_id',
+        'customer_id',
+    ];
+
+    protected $casts = [
+        'order_date' => 'date',
+        'fitting_date' => 'date',
+        'due_date' => 'date',
+        'discount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'total' => 'decimal:2',
+    ];
+
+    public function uniqueIds(): array
+    {
+        return ['ulid'];
+    }
 
     public function scopeUnpaid(Builder $query): Builder
     {
@@ -45,18 +67,20 @@ class Order extends Model
         }
 
         return $query->where(function ($q) use ($search) {
-                $q->where('number', 'like', "%{$search}%")
-                ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                    $customerQuery->where('name', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                });
-            });
+            $q->where('number', 'like', "%{$search}%")
+              ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                  $customerQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+              });
+        });
     }
 
-    public function scopeByMonthYear(Builder $query, mixed $month, int $year): Builder
+    public function scopeByMonthYear(Builder $query, mixed $month, ?int $year = null): Builder
     {
-        $query->whereYear('order_date', $year);
+        if ($year) {
+            $query->whereYear('order_date', $year);
+        }
 
         if (!empty($month) && $month !== 'all' && (int)$month > 0) {
             $query->whereMonth('order_date', (int)$month);
@@ -64,27 +88,29 @@ class Order extends Model
 
         return $query;
     }
-    
-    protected function hashedId(): Attribute
+
+    public function user()
     {
-        return Attribute::make(
-            get: fn () => Crypt::encryptString($this->attributes['id'] ?? ''),
-        );
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function user(){
-        return $this->belongsTo(User::class);
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function customer(){
-        return $this->belongsTo(Customer::class);
-    }
-
-    public function order_details(){
+    public function orderDetails()
+    {
         return $this->hasMany(OrderDetail::class, 'order_id', 'id');
     }
 
-    public function payments(){
+    public function payments()
+    {
         return $this->hasMany(Payment::class, 'order_id', 'id');
+    }
+
+    public function orderCancellations()
+    {
+        return $this->hasMany(OrderCancellation::class, 'order_id', 'id');
     }
 }

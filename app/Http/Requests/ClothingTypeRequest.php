@@ -2,75 +2,77 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Encryption\DecryptException;
+use App\Models\ClothingType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 
 class ClothingTypeRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
-    
+
     protected function prepareForValidation(): void
     {
-        $hashedId = $this->route('id'); 
+        $ulid = $this->route('ulid');
 
-        if ($hashedId) {
-            try {
-                $decryptedId = Crypt::decryptString($hashedId);
+        if ($ulid) {
+            $clothingType = ClothingType::where('ulid', $ulid)->first();
 
-                $this->merge([
-                    'id' => (int) $decryptedId,
-                ]);
-            } catch (DecryptException $e) {
+            if (!$clothingType) {
                 abort(response()->json([
                     'status' => 'error',
-                    'message' => 'Format parameter ID tidak valid.'
+                    'message' => 'Format atau ID ULID jenis pakaian tidak valid.'
                 ], 400));
             }
+
+            $this->merge([
+                'clothing_type_internal_id' => $clothingType->id,
+            ]);
         }
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
+        $internalId = $this->clothing_type_internal_id ?? null;
+
         return [
-            'code'  => ['required', 'string', 'max:8',
-                Rule::unique('clothing_types', 'code')->ignore($this->id) ],
-            'type'  => ['required', 'string', 'max:255',
-                Rule::unique('clothing_types', 'type')->ignore($this->id) ],
-            'category'  => ['required', 'string', 'in:baju,celana,rok'],
-            'base_price'  => ['nullable','numeric', 'min:0'],
+            'code' => [
+                'required',
+                'string',
+                'max:8',
+                Rule::unique('clothing_types', 'code')->ignore($internalId),
+            ],
+            'type' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('clothing_types', 'type')->ignore($internalId),
+            ],
+            'category'   => ['required', 'string', 'in:baju,celana,rok'],
+            'base_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }
-		public function messages(): array
-		{
-			return [
-				'code.required'         => 'Kode jenis pakaian wajib diisi.',
-				'code.string'           => 'Kode jenis pakaian harus berupa teks.',
-				'code.max'              => 'Kode jenis pakaian tidak boleh lebih dari :max karakter.',
-				'code.unique'           => 'Kode jenis pakaian sudah terdaftar di sistem.',
 
-				'type.required'         => 'Nama jenis pakaian wajib diisi.',
-				'type.string'           => 'Nama jenis pakaian harus berupa teks.',
-				'type.max'              => 'Nama jenis pakaian tidak boleh lebih dari :max karakter.',
-				'type.unique'           => 'Nama jenis pakaian sudah terdaftar di sistem.',
+    public function messages(): array
+    {
+        return [
+            'code.required'     => 'Kode jenis pakaian wajib diisi.',
+            'code.string'       => 'Kode jenis pakaian harus berupa teks.',
+            'code.max'          => 'Kode jenis pakaian tidak boleh lebih dari :max karakter.',
+            'code.unique'       => 'Kode jenis pakaian sudah terdaftar di sistem.',
 
-                'category.required'         => 'Category pakaian wajib dipilih.',
-                'category.in'               => 'Category yang dipilih harus berupa: baju, celana atau rok.',
+            'type.required'     => 'Nama jenis pakaian wajib diisi.',
+            'type.string'       => 'Nama jenis pakaian harus berupa teks.',
+            'type.max'          => 'Nama jenis pakaian tidak boleh lebih dari :max karakter.',
+            'type.unique'       => 'Nama jenis pakaian sudah terdaftar di sistem.',
 
-				'base_price.numeric'    => 'Harga dasar harus berupa angka.',
-				'base_price.min'        => 'Harga dasar tidak boleh kurang dari :min.',
-			];
-		}
+            'category.required' => 'Category pakaian wajib dipilih.',
+            'category.in'       => 'Category yang dipilih harus berupa: baju, celana atau rok.',
+
+            'base_price.numeric'=> 'Harga dasar harus berupa angka.',
+            'base_price.min'    => 'Harga dasar tidak boleh kurang dari :min.',
+        ];
+    }
 }

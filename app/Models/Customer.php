@@ -3,26 +3,35 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
-    use HasFactory;
-    
-    protected $appends = ['hashed_id'];
-    
+    use HasFactory, HasUlids;
+
+    /**
+     * Tentukan kolom ULID jika primary key di DB menggunakan id auto-increment.
+     */
+    public function uniqueIds(): array
+    {
+        return ['ulid'];
+    }
+
     protected $fillable = [
+        'ulid',
         'code',
         'name',
         'address',
         'phone',
         'email',
     ];
-    
-    protected $hidden = ['id'];
+
+    protected $hidden = [
+        'id',
+    ];
 
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
@@ -31,7 +40,7 @@ class Customer extends Model
         }
 
         return $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', "%{$search}%")
+            $q->where('code', 'like', "%{$search}%")
                 ->orWhere('name', 'like', "%{$search}%")
                 ->orWhere('address', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
@@ -39,18 +48,13 @@ class Customer extends Model
         });
     }
 
-    public function measurement_histories(){
-        return $this->hasMany(MeasurementHistory::class, 'customer_id', 'id');
-    }
-    
-    protected function hashedId(): Attribute
+    public function measurement_histories(): HasMany
     {
-        return Attribute::make(
-            get: fn () => Crypt::encryptString($this->attributes['id'] ?? ''),
-        );
+        return $this->hasMany(MeasurementHistory::class, 'customer_ulid', 'ulid');
     }
 
-    public function orders(){
+    public function orders(): HasMany
+    {
         return $this->hasMany(Order::class, 'customer_id', 'id');
     }
 }

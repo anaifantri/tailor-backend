@@ -6,6 +6,7 @@ use App\Models\ClothingType;
 use App\Models\Customer;
 use App\Models\MeasurementHistory;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class MeasurementHistoryFactory extends Factory
 {
@@ -13,11 +14,13 @@ class MeasurementHistoryFactory extends Factory
 
     public function definition(): array
     {
+        // 1. Ambil atau buat instance Customer dan ClothingType secara dinamis
+        $customer = Customer::inRandomOrder()->first() ?? Customer::factory()->create();
         $clothingType = ClothingType::inRandomOrder()->first() ?? ClothingType::factory()->create();
-        // $category = $this->faker->randomElement(['baju', 'celana', 'rok']);
-        $category = strtolower($clothingType->category);
 
-        // 2. Format detail ukuran menjadi array objek dengan key 'name' dan 'value'
+        $category = strtolower($clothingType->category ?? 'baju');
+
+        // 2. Format detail ukuran berupa array PHP (Laravel Eloquent Cast akan mengubahnya ke JSON secara otomatis)
         $measurementDetails = match ($category) {
             'baju' => [
                 ['name' => 'Panjang Badan', 'value' => $this->faker->numberBetween(40, 52)],
@@ -50,14 +53,15 @@ class MeasurementHistoryFactory extends Factory
         };
 
         return [
-            'customer_id' => Customer::inRandomOrder()->first()?->id ?? Customer::factory(),
+            'ulid' => (string) Str::ulid(),
+            'customer_id' => $customer->id,
+            'customer_ulid' => $customer->ulid,
             'clothing_type_id' => $clothingType->id,
-            'category' => $clothingType->category,
+            'clothing_type_ulid' => $clothingType->ulid,
+            'category' => $clothingType->category ?? 'Baju',
             'measured_by' => $this->faker->name(),
-            'measured_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
-            
-            'measurement_details' => json_encode($measurementDetails), // Menyimpan array objek [ {name, value}, ... ]
-            
+            'measured_at' => $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
+            'measurement_details' => $measurementDetails,
             'notes' => $this->faker->optional(0.7)->sentence(),
         ];
     }

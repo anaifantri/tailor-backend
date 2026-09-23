@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('clothing_types', function (Blueprint $table) {
             $table->id();
-
+            $table->ulid('ulid')->unique();
             $table->string('code')->unique();
             $table->string('type')->unique();
             $table->string('category');
-            $table->decimal('base_price', total: 10, places: 0)->default(0); 
+            $table->decimal('base_price', 10, 2)->default(0.00); 
 
             $table->timestamps();
         });

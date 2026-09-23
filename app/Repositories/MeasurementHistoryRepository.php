@@ -3,47 +3,61 @@
 namespace App\Repositories;
 
 use App\Models\MeasurementHistory;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class MeasurementHistoryRepository
 {
-    public function getAll(array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
-        return MeasurementHistory::select($fields)->with(['customer', 'clothing_type'])->latest()->paginate(10);
+        return MeasurementHistory::with(['customer', 'clothing_type'])
+            ->when($search, function ($query, $search) {
+                $query->where('category', 'like', "%{$search}%")
+                      ->orWhere('measured_by', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate($perPage);
     }
 
-    public function getById(int $id, array $fields)
+    public function getByUlid(string $ulid): MeasurementHistory
     {
-        return MeasurementHistory::select($fields)->with(['customer', 'clothing_type'])->findOrFail($id);
+        return MeasurementHistory::with(['customer', 'clothing_type'])
+            ->where('ulid', $ulid)
+            ->firstOrFail();
     }
 
-    public function getByCustomer(int $customerId, array $fields)
+    public function getByCustomerUlid(string $customerUlid)
     {
-        return MeasurementHistory::select($fields)->where('customer_id', $customerId)->with(['customer', 'clothing_type'])->latest()->get();
+        return MeasurementHistory::with(['customer', 'clothing_type'])
+            ->where('customer_ulid', $customerUlid)
+            ->latest()
+            ->get();
     }
 
-    public function getByCustomerAndClothingType(int $customerId, int $clothingTypeId, array $fields)
+    public function getByCustomerAndClothingTypeUlid(string $customerUlid, string $clothingTypeUlid)
     {
-        return MeasurementHistory::select($fields)->where('customer_id', $customerId)->where('clothing_type_id', $clothingTypeId)->with(['customer', 'clothing_type'])->latest()->get();
+        return MeasurementHistory::with(['customer', 'clothing_type'])
+            ->where('customer_ulid', $customerUlid)
+            ->where('clothing_type_ulid', $clothingTypeUlid)
+            ->latest()
+            ->get();
     }
 
-    public function create(array $data)
+    public function create(array $data): MeasurementHistory
     {
         return MeasurementHistory::create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data): MeasurementHistory
     {
-        $measurementHistory = MeasurementHistory::findOrFail($id);
-
+        $measurementHistory = $this->getByUlid($ulid);
         $measurementHistory->update($data);
 
-        return $measurementHistory;
+        return $measurementHistory->fresh(['customer', 'clothing_type']);
     }
 
-    public function delete(int $id)
+    public function delete(string $ulid): bool
     {
-        $measurementHistory = MeasurementHistory::findOrFail($id);
-
-        $measurementHistory->delete();
+        $measurementHistory = $this->getByUlid($ulid);
+        return $measurementHistory->delete();
     }
 }

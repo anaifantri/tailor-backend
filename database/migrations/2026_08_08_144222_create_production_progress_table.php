@@ -13,8 +13,17 @@ return new class extends Migration
     {
         Schema::create('production_progress', function (Blueprint $table) {
             $table->id();
+            $table->ulid('ulid')->unique();
 
-            $table->foreignId('order_detail_id')->constrained('order_details')->onDelete('cascade');
+            // Relasi ULID & Internal BigInteger Foreign Key
+            $table->foreignUlid('order_detail_ulid')
+                  ->constrained('order_details', 'ulid')
+                  ->cascadeOnDelete();
+                  
+            $table->foreignId('order_detail_id')
+                  ->constrained('order_details')
+                  ->cascadeOnDelete();
+
             $table->string('status')->default('queued'); 
             $table->date('progress_date');
             $table->text('notes')->nullable();

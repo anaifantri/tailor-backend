@@ -13,20 +13,18 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Membuat 1 User khusus untuk login uji coba Anda sendiri
         User::create([
-            'name' => 'Admin Utama',
-            'username' => 'admin',
-            'email' => 'admin@example.com',
+            'name' => 'Administrator',
+            'username' => 'Administrator',
+            'email' => 'admin@exampel.com',
             'phone' => '081234567890',
-            'password' => Hash::make('rahasia123'),
+            'password' => Hash::make('password123'),
             'is_active' => true,
-            'photo' => 'default.jpg',
+            'photo' => null,
             'remember_token' => null,
             'email_verified_at' => now(),
         ]);
 
-        // 2. Membuat 20 User dummy acak menggunakan Factory yang sudah dibuat
-        User::factory()->count(10)->create();
+        User::factory()->count(5)->create();
     }
 }

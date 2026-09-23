@@ -3,17 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
-    protected $appends = ['hashed_id'];
-    
+    use HasFactory, HasUlids;
+
     protected $fillable = [
+        'ulid',
         'user_id',
+        'user_ulid',
         'order_id',
+        'order_ulid',
         'payment_date',
         'amount_paid',
         'payment_method',
@@ -21,7 +25,25 @@ class Payment extends Model
         'notes',
     ];
     
-    protected $hidden = ['id'];
+    protected $hidden = [
+        'id',
+        'user_id',
+        'order_id',
+    ];
+
+    protected $casts = [
+        'payment_date' => 'date',
+        'amount_paid' => 'decimal:2',
+    ];
+
+    public function uniqueIds(): array
+    {
+        return ['ulid'];
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   SCOPES                                   */
+    /* -------------------------------------------------------------------------- */
 
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
@@ -30,43 +52,44 @@ class Payment extends Model
         }
 
         return $query->where(function ($q) use ($search) {
-                $q->where('payment_date', 'like', "%{$search}%")
-				  ->orWhere('payment_method', 'like', "%{$search}%")
-				  ->orWhere('payment_status', 'like', "%{$search}%")
-                  ->orWhereHas('order', function ($orderQuery) use ($search) {
-                      $orderQuery->where('number', 'like', "%{$search}%")
-					  ->orWhereHas('customer', function ($customerQuery) use ($search) {
-						  $customerQuery->where('name', 'like', "%{$search}%")
-										->orWhere('phone', 'like', "%{$search}%")
-										->orWhere('email', 'like', "%{$search}%");
-					  });
-                  });
-            });
+            $q->where('payment_date', 'like', "%{$search}%")
+              ->orWhere('payment_method', 'like', "%{$search}%")
+              ->orWhere('payment_status', 'like', "%{$search}%")
+              ->orWhereHas('order', function ($orderQuery) use ($search) {
+                  $orderQuery->where('number', 'like', "%{$search}%")
+                      ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                          $customerQuery->where('name', 'like', "%{$search}%")
+                              ->orWhere('phone', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%");
+                      });
+              });
+        });
     }
 
-    public function scopeByMonthYear(Builder $query, mixed $month, int $year): Builder
+    public function scopeByMonthYear(Builder $query, mixed $month = null, mixed $year = null): Builder
     {
-        $query->whereYear('payment_date', $year);
+        if (!empty($year)) {
+            $query->whereYear('payment_date', (int) $year);
+        }
 
-        if (!empty($month) && $month !== 'all' && (int)$month > 0) {
-            $query->whereMonth('payment_date', (int)$month);
+        if (!empty($month) && $month !== 'all' && (int) $month > 0) {
+            $query->whereMonth('payment_date', (int) $month);
         }
 
         return $query;
     }
-    
-    protected function hashedId(): Attribute
+
+    /* -------------------------------------------------------------------------- */
+    /*                                RELATIONSHIPS                               */
+    /* -------------------------------------------------------------------------- */
+
+    public function user(): BelongsTo
     {
-        return Attribute::make(
-            get: fn () => Crypt::encryptString($this->attributes['id'] ?? ''),
-        );
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function user(){
-        return $this->belongsTo(User::class);
-    }
-
-    public function order(){
-        return $this->belongsTo(Order::class);
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'order_id');
     }
 }

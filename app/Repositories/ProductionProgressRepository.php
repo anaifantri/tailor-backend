@@ -3,37 +3,41 @@
 namespace App\Repositories;
 
 use App\Models\ProductionProgress;
+use Illuminate\Database\Eloquent\Collection;
 
 class ProductionProgressRepository
 {
-    public function getByOrderDetail(int $orderDetailId)
+    public function getByOrderDetailUlid(string $orderDetailUlid): Collection
     {
-        return ProductionProgress::where('order_detail_id', $orderDetailId)->latest();
+        return ProductionProgress::with(['orderDetail'])
+            ->where('order_detail_ulid', $orderDetailUlid)
+            ->latest()
+            ->get();
     }
 
-    public function getById(int $id, array $fields)
+    public function getByUlid(string $ulid): ProductionProgress
     {
-        return ProductionProgress::select($fields)->with(['order_detail'])->findOrFail($id);
+        return ProductionProgress::with(['orderDetail'])
+            ->where('ulid', $ulid)
+            ->firstOrFail();
     }
 
-    public function create(array $data)
+    public function create(array $data): ProductionProgress
     {
         return ProductionProgress::create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data): ProductionProgress
     {
-        $productionProgress = ProductionProgress::findOrFail($id);
-
+        $productionProgress = $this->getByUlid($ulid);
         $productionProgress->update($data);
 
-        return $productionProgress;
+        return $productionProgress->fresh(['orderDetail']);
     }
 
-    public function delete(int $id)
+    public function delete(string $ulid): bool
     {
-        $productionProgress = ProductionProgress::findOrFail($id);
-
-        $productionProgress->delete();
+        $productionProgress = $this->getByUlid($ulid);
+        return $productionProgress->delete();
     }
 }

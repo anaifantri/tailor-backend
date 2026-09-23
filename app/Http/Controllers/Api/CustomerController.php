@@ -7,38 +7,38 @@ use App\Http\Requests\CustomerRequest;
 use App\Http\Resources\CustomerResource;
 use App\Services\CustomerService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    private $customerService;
+    private CustomerService $customerService;
 
     public function __construct(CustomerService $customerService)
     {
         $this->customerService = $customerService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $fields = ['id', 'code', 'name', 'address', 'email', 'phone', 'created_at'];
-		
-        $perPage = $request->query('per_page', 10);
-        $search = $request->query('search', null);
+        $fields = ['ulid', 'code', 'name', 'address', 'email', 'phone', 'created_at'];
+
+        $perPage = (int) $request->query('per_page', 10);
+        $search = $request->query('search');
 
         $customers = $this->customerService->getAll($perPage, $search, $fields);
-		
-		return response()->json($customers, 200);
 
-        // return response()->json(CustomerResource::collection($customers));
+        return response()->json($customers, 200);
     }
 
-    public function show(string $hashedId){
+    public function show(string $ulid): JsonResponse
+    {
         try {
-            $fields = ['id', 'code', 'name', 'address', 'email', 'phone', 'created_at'];
+            $fields = ['ulid', 'code', 'name', 'address', 'email', 'phone', 'created_at'];
 
-            $customer = $this->customerService->getByHashedId($hashedId, $fields);
+            $customer = $this->customerService->getByUlid($ulid, $fields);
 
-            return response()->json(new CustomerResource(['customer' => $customer]));
+            return response()->json(new CustomerResource(['customer' => $customer]), 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data pelanggan tidak ditemukan'
@@ -46,26 +46,26 @@ class CustomerController extends Controller
         }
     }
 
-    public function store(CustomerRequest $request)
+    public function store(CustomerRequest $request): JsonResponse
     {
-        $validateData = $request->validated();
+        $validatedData = $request->validated();
 
-        $customer = $this->customerService->create($validateData);
+        $customer = $this->customerService->create($validatedData);
 
         return response()->json(new CustomerResource([
             'message' => 'Pendaftaran pelanggan baru berhasil',
             'customer' => $customer
-            ]), 201);
+        ]), 201);
     }
 
-    public function update(CustomerRequest $request, string $hashedId)
+    public function update(CustomerRequest $request, string $ulid): JsonResponse
     {
         try {
-            $validateData = $request->validated();
-            
-            $customer = $this->customerService->update($request->id, $validateData);
-            
-            return response()->json(new CustomerResource($customer));
+            $validatedData = $request->validated();
+
+            $customer = $this->customerService->update($ulid, $validatedData);
+
+            return response()->json(new CustomerResource($customer), 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data pelanggan tidak ditemukan'
@@ -73,13 +73,14 @@ class CustomerController extends Controller
         }
     }
 
-    public function destroy(string $hashedId)
+    public function destroy(string $ulid): JsonResponse
     {
         try {
-            $this->customerService->delete($hashedId);
+            $this->customerService->delete($ulid);
+
             return response()->json([
                 'message' => 'Hapus data pelanggan berhasil..!!'
-            ]);
+            ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data pelanggan tidak ditemukan'

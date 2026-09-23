@@ -2,62 +2,55 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Repositories\CustomerRepository;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CustomerService
 {
-    private $customerRepository;
+    private CustomerRepository $customerRepository;
 
     public function __construct(CustomerRepository $customerRepository)
     {
         $this->customerRepository = $customerRepository;
     }
 
-    public function getAll(int $perPage = 10, ?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields = ['*']): LengthAwarePaginator
     {
         return $this->customerRepository->getAll($perPage, $search, $fields);
     }
 
-    public function getByHashedId(string $hashedId, array $fields)
+    public function getByUlid(string $ulid, array $fields = ['*']): Customer
     {
-        try {
-            $decryptedId = Crypt::decryptString($hashedId);
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
-            return $this->customerRepository->getById((int) $decryptedId, $fields ?? ['*']);
+        return $this->customerRepository->getByUlid($ulid, $fields);
     }
 
-    public function create(array $data)
+    public function findByUlid(string $ulid): Customer
     {
-        $fields = ['id', 'code'];
+        return $this->customerRepository->findByUlid($ulid);
+    }
+
+    public function create(array $data): Customer
+    {
         $lastCustomer = $this->customerRepository->getLatestByCode();
-        if(!$lastCustomer){
+        if (!$lastCustomer) {
             $number = 1;
-        }else{
+        } else {
             $number = (int) substr($lastCustomer->code, 5) + 1;
         }
-        $newCustomerCode = 'CUST-' . str_pad($number, 5, '0', STR_PAD_LEFT);
-
-        $data['code'] = $newCustomerCode;
+        
+        $data['code'] = 'CUST-' . str_pad((string) $number, 5, '0', STR_PAD_LEFT);
 
         return $this->customerRepository->create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data): Customer
     {
-        $fields = ['id'];
-
-        return $this->customerRepository->update($id, $data);
+        return $this->customerRepository->update($ulid, $data);
     }
 
-    public function delete(string $hashedId)
+    public function delete(string $ulid): void
     {
-        $fields = ['id'];
-        $decryptedId = Crypt::decryptString($hashedId);
-
-        return $this->customerRepository->delete((int) $decryptedId);
+        $this->customerRepository->delete($ulid);
     }
 }

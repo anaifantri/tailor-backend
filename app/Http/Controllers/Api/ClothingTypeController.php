@@ -7,37 +7,38 @@ use App\Http\Requests\ClothingTypeRequest;
 use App\Http\Resources\ClothingTypeResource;
 use App\Services\ClothingTypeService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ClothingTypeController extends Controller
 {
-    private $clothingTypeService;
+    private ClothingTypeService $clothingTypeService;
 
     public function __construct(ClothingTypeService $clothingTypeService)
     {
         $this->clothingTypeService = $clothingTypeService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $fields = ['id', 'code', 'type', 'category', 'base_price'];
-		
-        $perPage = $request->query('per_page', 10);
-        $search = $request->query('search', null);
+        $fields = ['ulid', 'code', 'type', 'category', 'base_price'];
+
+        $perPage = (int) $request->query('per_page', 10);
+        $search = $request->query('search');
 
         $clothingTypes = $this->clothingTypeService->getAll($perPage, $search, $fields);
-		
-		
-		return response()->json($clothingTypes, 200);
+
+        return response()->json($clothingTypes, 200);
     }
 
-    public function show(string $hashedId){
+    public function show(string $ulid): JsonResponse
+    {
         try {
-            $fields = ['id', 'code', 'type', 'category', 'base_price'];
+            $fields = ['ulid', 'code', 'type', 'category', 'base_price'];
 
-            $clothingType = $this->clothingTypeService->getByHashedId($hashedId, $fields);
+            $clothingType = $this->clothingTypeService->getByUlid($ulid, $fields);
 
-            return response()->json(new ClothingTypeResource(['clothing_type' => $clothingType]));
+            return response()->json(new ClothingTypeResource(['clothing_type' => $clothingType]), 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data jenis pakaian tidak ditemukan'
@@ -45,26 +46,26 @@ class ClothingTypeController extends Controller
         }
     }
 
-    public function store(ClothingTypeRequest $request)
+    public function store(ClothingTypeRequest $request): JsonResponse
     {
-        $validateData = $request->validated();
+        $validatedData = $request->validated();
 
-        $clothingType = $this->clothingTypeService->create($validateData);
+        $clothingType = $this->clothingTypeService->create($validatedData);
 
         return response()->json(new ClothingTypeResource([
             'message' => 'Pendaftaran jenis pakaian baru berhasil',
             'clothing_type' => $clothingType
-            ]), 201);
+        ]), 201);
     }
 
-    public function update(ClothingTypeRequest $request, string $hashedId)
+    public function update(ClothingTypeRequest $request, string $ulid): JsonResponse
     {
         try {
-            $validateData = $request->validated();
-            
-            $clothingType = $this->clothingTypeService->update($request->id, $validateData);
-            
-            return response()->json(new ClothingTypeResource($clothingType));
+            $validatedData = $request->validated();
+
+            $clothingType = $this->clothingTypeService->update($ulid, $validatedData);
+
+            return response()->json(new ClothingTypeResource($clothingType), 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data jenis pakaian tidak ditemukan'
@@ -72,13 +73,14 @@ class ClothingTypeController extends Controller
         }
     }
 
-    public function destroy(string $hashedId)
+    public function destroy(string $ulid): JsonResponse
     {
         try {
-            $this->clothingTypeService->delete($hashedId);
+            $this->clothingTypeService->delete($ulid);
+
             return response()->json([
                 'message' => 'Hapus data jenis pakaian berhasil..!!'
-            ]);
+            ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data jenis pakaian tidak ditemukan'

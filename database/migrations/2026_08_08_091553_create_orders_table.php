@@ -13,17 +13,31 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->ulid('ulid')->unique();
 
             $table->string('number')->unique();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('customer_id')->constrained('orders')->onDelete('cascade');
+
+            // Relasi ULID ke Customer dan User
+            $table->foreignUlid('customer_ulid')
+                  ->constrained('customers', 'ulid')
+                  ->cascadeOnDelete();
+
+            $table->foreignUlid('user_ulid')
+                  ->nullable()
+                  ->constrained('users', 'ulid')
+                  ->nullOnDelete();
+
+            // Relasi Internal ID (BigInteger) untuk optimasi DB
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+
             $table->date('order_date');
             $table->date('fitting_date')->nullable();
             $table->date('due_date');
-            $table->decimal('discount', total: 12, places: 0)->default(0);
-            $table->decimal('tax', total: 12, places: 0)->default(0);
-            $table->decimal('total', total: 12, places: 0)->default(0);
-            $table->text('notes')->nullable(); 
+            $table->decimal('discount', 12, 2)->default(0);
+            $table->decimal('tax', 12, 2)->default(0);
+            $table->decimal('total', 12, 2)->default(0);
+            $table->text('notes')->nullable();
 
             $table->timestamps();
         });

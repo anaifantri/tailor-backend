@@ -5,9 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Notifications\PasswordChangedNotification;
 use App\Repositories\UserRepository;
-use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -21,36 +19,54 @@ class UserService
         $this->userRepository = $userRepository;
     }
 
-    public function getAll(int $perPage = 10, ?string $search = null, array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null, array $fields = ['*'])
     {
         return $this->userRepository->getAll($perPage, $search, $fields);
     }
 
-    public function getByHashedId(string $hashedId, array $fields)
+    public function getByUlid(string $ulid, array $fields = ['*'])
     {
-        try {
-            // Dekripsi string acak dari React kembali menjadi integer ID asli
-            $decryptedId = Crypt::decryptString($hashedId);
-            
-            // Oper ID asli dan array $fields ke Repository
-            return $this->userRepository->getById((int) $decryptedId, $fields);
-            
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
-        // return $this->userRepository->getById($hasedId, $fields ?? ['*']);
+        return $this->userRepository->getByUlid($ulid, $fields);
     }
 
-    public function findByHashedId(string $hashedId)
+    public function findByUlid(string $ulid)
     {
-        try {
-            $decryptedId = Crypt::decryptString($hashedId);
-            
-            return $this->userRepository->findById((int) $decryptedId);
-            
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
+        return $this->userRepository->findByUlid($ulid);
+    }
+
+    public function create(array $data)
+    {
+        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+            $data['photo'] = $this->uploadPhoto($data['photo']);
         }
+
+        return $this->userRepository->create($data);
+    }
+
+    public function update(string $ulid, array $data)
+    {
+        $user = $this->userRepository->getByUlid($ulid, ['id', 'ulid', 'photo']);
+
+        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
+            if (!empty($user->photo)) {
+                $this->deletePhoto($user->photo);
+            }
+
+            $data['photo'] = $this->uploadPhoto($data['photo']);
+        }
+
+        return $this->userRepository->update($ulid, $data);
+    }
+
+    public function delete(string $ulid)
+    {
+        $user = $this->userRepository->getByUlid($ulid, ['id', 'ulid', 'photo']);
+
+        if ($user->photo) {
+            $this->deletePhoto($user->photo);
+        }
+
+        return $this->userRepository->delete($ulid);
     }
 
     public function changePassword(User $user, array $data): void
@@ -66,53 +82,15 @@ class UserService
         $user->notify(new PasswordChangedNotification());
     }
 
-    public function create(array $data)
-    {
-        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile){
-            $data['photo'] = $this->uploadPhoto($data['photo']);
-        }
-
-        return $this->userRepository->create($data);
-    }
-
-    public function update(int $id, array $data)
-    {
-        $fields = ['id', 'photo'];
-        $user = $this->userRepository->getById($id, $fields);
-
-        if (isset($data['photo']) && $data['photo'] instanceof UploadedFile){
-            if(!empty($user->photo)){
-                $this->deletePhoto($user->photo);
-            }
-
-            $data['photo'] = $this->uploadPhoto($data['photo']);
-        }
-
-        return $this->userRepository->update($id, $data);
-    }
-
-    public function delete(string $hashedId)
-    {
-        $fields = ['id', 'photo'];
-        $decryptedId = Crypt::decryptString($hashedId);
-        $user = $this->userRepository->getById((int) $decryptedId, $fields);
-
-        if ($user->photo){
-            $this->deletePhoto($user->photo);
-        }
-
-        return $this->userRepository->delete((int) $decryptedId);
-    }
-
-    private function uploadPhoto(UploadedFile $photo)
+    private function uploadPhoto(UploadedFile $photo): string
     {
         return $photo->store('user-photo', 'public');
     }
 
-    private function deletePhoto(string $photoPath)
+    private function deletePhoto(string $photoPath): void
     {
-        $relativePath = 'user-photo/'. basename($photoPath);
-        if(Storage::disk('public')->exists($relativePath)){
+        $relativePath = 'user-photo/' . basename($photoPath);
+        if (Storage::disk('public')->exists($relativePath)) {
             Storage::disk('public')->delete($relativePath);
         }
     }

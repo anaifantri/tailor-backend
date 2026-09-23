@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('materials', function (Blueprint $table) {
             $table->id();
+            $table->ulid('ulid')->unique();
             $table->string('code')->unique();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('unit');
-            $table->decimal('initial_stock', total: 5, places: 2)->default(0.00); 
-            $table->decimal('stock', total: 5, places: 2)->default(0.00); 
+            $table->decimal('initial_stock', 8, 2)->default(0.00); 
+            $table->decimal('stock', 8, 2)->default(0.00); 
             $table->string('photo')->nullable();
             $table->timestamps();
         });

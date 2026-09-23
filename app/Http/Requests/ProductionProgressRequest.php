@@ -2,52 +2,47 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Encryption\DecryptException;
+use App\Models\OrderDetail;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Crypt;
 
 class ProductionProgressRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
-    
+
     protected function prepareForValidation(): void
     {
-        $hashedId = $this->route('id'); 
-
-        if ($hashedId) {
-            try {
-                $decryptedId = Crypt::decryptString($hashedId);
-
+        if ($this->has('order_detail_ulid')) {
+            $orderDetail = OrderDetail::where('ulid', $this->order_detail_ulid)->first();
+            if ($orderDetail) {
                 $this->merge([
-                    'id' => (int) $decryptedId,
+                    'order_detail_id' => $orderDetail->id,
                 ]);
-            } catch (DecryptException $e) {
-                abort(response()->json([
-                    'status' => 'error',
-                    'message' => 'Format parameter ID tidak valid.'
-                ], 400));
             }
         }
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'order_detail_id'  => ['required'],
-            'progress_date'  => ['required'],
-            'status'  => ['required', 'string'],
-            'notes'  => ['string', 'nullable'],
+            'order_detail_ulid' => ['required', 'string', 'exists:order_details,ulid'],
+            'order_detail_id'   => ['required', 'integer', 'exists:order_details,id'],
+            'progress_date'     => ['required', 'date'],
+            'status'            => ['required', 'string', 'max:100'],
+            'notes'             => ['nullable', 'string', 'max:5000'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'order_detail_ulid.required' => 'Detail pesanan wajib dipilih.',
+            'order_detail_ulid.exists'   => 'Data detail pesanan tidak valid.',
+            'progress_date.required'     => 'Tanggal progress pengerjaan wajib diisi.',
+            'progress_date.date'         => 'Format tanggal progress tidak valid.',
+            'status.required'            => 'Status pengerjaan wajib diisi.',
         ];
     }
 }

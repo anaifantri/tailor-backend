@@ -7,103 +7,113 @@ use App\Http\Requests\OrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Services\OrderService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    private $orderService;
+    protected OrderService $orderService;
 
     public function __construct(OrderService $orderService)
     {
         $this->orderService = $orderService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
-		
-		
         $perPage = $request->query('per_page', 10);
-        $search = $request->query('search', null);
+        $search = $request->query('search');
+        $month = $request->query('month');
+        $year = $request->query('year');
 
-        $orders = $this->orderService->getAll($perPage, $request->month, $request->year, $request->search, $fields);
-		
-		return response()->json($orders, 200);
+        $orders = $this->orderService->getAll((int) $perPage, $month, $year ? (int) $year : null, $search);
 
-        //return response()->json(OrderResource::collection($orders));
+        return OrderResource::collection($orders)->response();
     }
-	
-    public function getBySearch(Request $request)
+
+    public function getBySearch(Request $request): JsonResponse
     {
-        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
-		
+        $orders = $this->orderService->getBySearch($request->query('search'));
 
-        $orders = $this->orderService->getBySearch($request->search, $fields);
-
-        
-		return response()->json(OrderResource::collection($orders));
+        return response()->json([
+            'status' => 'success',
+            'data' => OrderResource::collection($orders),
+        ]);
     }
 
-    public function unpaid(Request $request)
+    public function unpaid(Request $request): JsonResponse
     {
-        $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
+        $orders = $this->orderService->getUnpaid($request->query('search'));
 
-        $orders = $this->orderService->getUnpaid($request->search, $fields);
-
-        return response()->json(OrderResource::collection($orders));
+        return response()->json([
+            'status' => 'success',
+            'data' => OrderResource::collection($orders),
+        ]);
     }
 
-    public function show(string $hashedId){
-        try {
-            $fields = ['id', 'number', 'user_id', 'customer_id', 'order_date', 'fitting_date', 'due_date', 'tax', 'total', 'discount', 'notes', 'created_at'];
-
-            $order = $this->orderService->getByHashedId($hashedId, $fields);
-
-            return response()->json(new OrderResource(['order' => $order]));
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Data pesanan tidak ditemukan'
-            ], 404);
-        }
-    }
-
-    public function store(OrderRequest $request)
-    {
-        $validateData = $request->validated();
-
-        $order = $this->orderService->create($validateData);
-
-        return response()->json(new OrderResource([
-            'message' => 'Pendaftaran pesanan baru berhasil',
-            'order' => $order
-            ]), 201);
-    }
-
-    public function update(OrderRequest $request, string $hashedId)
+    public function show(string $ulid): JsonResponse
     {
         try {
-            $validateData = $request->validated();
-            
-            $order = $this->orderService->update($hashedId, $validateData);
-            
-            return response()->json(new OrderResource($order));
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Data pesanan tidak ditemukan'
-            ], 404);
-        }
-    }
+            $order = $this->orderService->getByUlid($ulid);
 
-    public function destroy(string $hashedId)
-    {
-        try {
-            $this->orderService->delete($hashedId);
             return response()->json([
-                'message' => 'Hapus data pesanan berhasil..!!'
+                'status' => 'success',
+                'data' => new OrderResource($order),
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
-                'message' => 'Data pesanan tidak ditemukan'
+                'status' => 'error',
+                'message' => 'Data pesanan tidak ditemukan.',
+            ], 404);
+        }
+    }
+
+    public function store(OrderRequest $request): JsonResponse
+    {
+        $validatedData = $request->validated();
+
+        $order = $this->orderService->create($validatedData);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pendaftaran pesanan baru berhasil.',
+            'data' => new OrderResource($order),
+        ], 201);
+    }
+
+    public function update(OrderRequest $request, string $ulid): JsonResponse
+    {
+        try {
+            $validatedData = $request->validated();
+
+            $order = $this->orderService->update($ulid, $validatedData);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pembaruan data pesanan berhasil.',
+                'data' => new OrderResource($order),
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data pesanan tidak ditemukan.',
+            ], 404);
+        }
+    }
+
+    public function destroy(string $ulid): JsonResponse
+    {
+        try {
+            $this->orderService->delete($ulid);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Hapus data pesanan berhasil.',
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data pesanan tidak ditemukan.',
             ], 404);
         }
     }

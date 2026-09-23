@@ -2,77 +2,71 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Encryption\DecryptException;
+use App\Models\Customer;
+use App\Models\ClothingType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Crypt;
 
 class MeasurementHistoryRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
-    
+
     protected function prepareForValidation(): void
     {
-        $hashedId = $this->route('id'); 
-
-        if ($hashedId) {
-            try {
-                $decryptedId = Crypt::decryptString($hashedId);
-
+        // Resolusi ULID Customer ke internal integer ID untuk relational integrity
+        if ($this->has('customer_ulid')) {
+            $customer = Customer::where('ulid', $this->customer_ulid)->first();
+            if ($customer) {
                 $this->merge([
-                    'id' => (int) $decryptedId,
+                    'customer_id' => $customer->id,
                 ]);
-            } catch (DecryptException $e) {
-                abort(response()->json([
-                    'status' => 'error',
-                    'message' => 'Format parameter ID tidak valid.'
-                ], 400));
+            }
+        }
+
+        // Resolusi ULID ClothingType ke internal integer ID
+        if ($this->has('clothing_type_ulid')) {
+            $clothingType = ClothingType::where('ulid', $this->clothing_type_ulid)->first();
+            if ($clothingType) {
+                $this->merge([
+                    'clothing_type_id' => $clothingType->id,
+                ]);
             }
         }
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'customer_id'  => ['required'],
-            'clothing_type_id'  => ['required'],
-            'category'  => ['required'],
-            'measured_at'  => ['required', 'date'],
-            'measured_by'  => ['required', 'string', 'max:255'],
-            'measurement_details'  => ['required'],
-            'notes'  => ['nullable', 'string'],
+            'customer_ulid' => ['required', 'string', 'exists:customers,ulid'],
+            'clothing_type_ulid' => ['required', 'string', 'exists:clothing_types,ulid'],
+            'customer_id' => ['required', 'integer', 'exists:customers,id'],
+            'clothing_type_id' => ['required', 'integer', 'exists:clothing_types,id'],
+            'category' => ['required', 'string', 'max:100'],
+            'measured_at' => ['required', 'date'],
+            'measured_by' => ['required', 'string', 'max:255'],
+            'measurement_details' => ['required', 'array'],
+            'notes' => ['nullable', 'string'],
         ];
     }
-	
-	public function messages(): array
-	{
-		return [
-			'customer_id.required'         => 'Kolom pelanggan wajib diisi.',
-			'clothing_type_id.required'    => 'Kolom jenis pakaian wajib diisi.',
-			'category.required'             => 'Kolom katagory pakaian wajib dipilih.',
-			'measured_at.required'         => 'Tanggal pengukuran wajib diisi.',
-			
-			'measured_by.required'         => 'Kolom diukur oleh wajib diisi.',
-			'measured_by.string'           => 'Kolom diukur oleh harus berupa teks.',
-			'measured_by.max'              => 'Kolom diukur oleh tidak boleh lebih dari :max karakter.',
-			
-			'measured_at.required'         => 'Tanggal pengukuran wajib diisi.',
-			'measured_at.date'     			=> 'Format tanggal pengukuran tidak valid.',
-			
-			'measurement_details.required' 	=> 'Kolo Bagian yang perlu wajib diisi.',
-			
-			'notes.string'                 => 'Catatan harus berupa teks atau string.',
-		];
-	}
 
+    public function messages(): array
+    {
+        return [
+            'customer_ulid.required' => 'Pelanggan wajib dipilih.',
+            'customer_ulid.exists' => 'Data pelanggan tidak valid.',
+            'clothing_type_ulid.required' => 'Jenis pakaian wajib dipilih.',
+            'clothing_type_ulid.exists' => 'Data jenis pakaian tidak valid.',
+            'category.required' => 'Kategori pakaian wajib dipilih.',
+            'measured_at.required' => 'Tanggal pengukuran wajib diisi.',
+            'measured_at.date' => 'Format tanggal pengukuran tidak valid.',
+            'measured_by.required' => 'Kolom pengukur wajib diisi.',
+            'measured_by.string' => 'Kolom pengukur harus berupa teks.',
+            'measured_by.max' => 'Kolom pengukur tidak boleh lebih dari :max karakter.',
+            'measurement_details.required' => 'Rincian ukuran wajib diisi.',
+            'measurement_details.array' => 'Format rincian ukuran harus berupa array JSON.',
+            'notes.string' => 'Catatan harus berupa teks.',
+        ];
+    }
 }

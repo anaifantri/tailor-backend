@@ -13,14 +13,22 @@ return new class extends Migration
     {
         Schema::create('order_details', function (Blueprint $table) {
             $table->id();
-            
-            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-            $table->foreignId('clothing_type_id')->nullable()->constrained('clothing_types')->onDelete('set null');
-            $table->foreignId('material_id')->nullable()->constrained('materials')->onDelete('set null');
+            $table->ulid('ulid')->unique();
+
+            // Relasi ULID
+            $table->foreignUlid('order_ulid')->constrained('orders', 'ulid')->cascadeOnDelete();
+            $table->foreignUlid('clothing_type_ulid')->nullable()->constrained('clothing_types', 'ulid')->nullOnDelete();
+            $table->foreignUlid('material_ulid')->nullable()->constrained('materials', 'ulid')->nullOnDelete();
+
+            // Relasi Internal ID (BigInteger)
+            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('clothing_type_id')->nullable()->constrained('clothing_types')->nullOnDelete();
+            $table->foreignId('material_id')->nullable()->constrained('materials')->nullOnDelete();
+
             $table->integer('quantity')->default(1);
             $table->json('measurements');
-            $table->decimal('price', total: 12, places: 0)->default(0); 
-            $table->decimal('fabric_consumed_meter', total: 5, places: 2)->default(0.00); 
+            $table->decimal('price', 12, 2)->default(0.00); 
+            $table->decimal('fabric_consumed_meter', 5, 2)->default(0.00); 
             $table->text('notes')->nullable(); 
 
             $table->timestamps();

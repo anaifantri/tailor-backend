@@ -2,31 +2,35 @@
 
 namespace Database\Factories;
 
+use App\Models\ClothingType;
+use App\Models\Tailor;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Tailor>
  */
 class TailorFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    protected $model = \App\Models\Tailor::class;
+    protected $model = Tailor::class;
 
     public function definition(): array
     {
-        $faker = \Faker\Factory::create('id_ID');
+        // Ambil type yang tersedia dari database ClothingType
+        $clothingType = ClothingType::inRandomOrder()->value('type');
+
         return [
-            'code' => 'TLR-' . $faker->unique()->numerify('#####'),
-            'name' => $faker->name(),
-            'email' => $faker->unique()->safeEmail,
-            'phone' => '08' . $faker->numerify('##########'),
-            'address' => $faker->address(),
-            'is_active' => $faker->boolean(80), 
-            'specialty' => json_encode([$faker->randomElement(['Kebaya', 'Jas', 'Baju Casual', 'Seragam'])]),
+            'ulid' => (string) Str::ulid(),
+            'code' => 'TLR-' . $this->faker->unique()->numerify('#####'),
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'phone' => '08' . $this->faker->numerify('##########'),
+            'address' => $this->faker->address(),
+            'is_active' => $this->faker->boolean(80), 
+            'specialty' => [
+                // Gunakan nilai dari DB, atau fallback ke default jika DB ClothingType masih kosong
+                $clothingType ?? $this->faker->randomElement(['Kebaya', 'Jas', 'Baju Casual', 'Seragam'])
+            ],
         ];
     }
 }

@@ -3,76 +3,48 @@
 namespace App\Services;
 
 use App\Repositories\MeasurementHistoryRepository;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Support\Facades\Crypt;
 
 class MeasurementHistoryService
 {
-    private $measurementHistoryRepository;
+    protected MeasurementHistoryRepository $measurementHistoryRepository;
 
     public function __construct(MeasurementHistoryRepository $measurementHistoryRepository)
     {
         $this->measurementHistoryRepository = $measurementHistoryRepository;
     }
 
-    public function getAll(array $fields)
+    public function getAll(int $perPage = 10, ?string $search = null)
     {
-        return $this->measurementHistoryRepository->getAll($fields);
+        return $this->measurementHistoryRepository->getAll($perPage, $search);
     }
 
-    public function getByHashedId(string $hashedId, array $fields)
+    public function getByUlid(string $ulid)
     {
-        try {
-            $decryptedId = Crypt::decryptString($hashedId);
-            return $this->measurementHistoryRepository->getById((int) $decryptedId, $fields ?? ['*']);
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
+        return $this->measurementHistoryRepository->getByUlid($ulid);
     }
 
-    public function getByCustomer(string $hashedCustomerId, array $fields)
+    public function getByCustomer(string $customerUlid)
     {
-        try {
-            $customerId = Crypt::decryptString($hashedCustomerId);
-            return $this->measurementHistoryRepository->getByCustomer((int) $customerId, $fields ?? ['*']);
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
+        return $this->measurementHistoryRepository->getByCustomerUlid($customerUlid);
     }
 
-    public function getByCustomerAndClothingType(string $hashedCustomerId, string $hashedClothingTypeId, array $fields)
+    public function getByCustomerAndClothingType(string $customerUlid, string $clothingTypeUlid)
     {
-        try {
-            $customerId = Crypt::decryptString($hashedCustomerId);
-            $clothingTypeId = Crypt::decryptString($hashedClothingTypeId);
-            return $this->measurementHistoryRepository->getByCustomerAndClothingType((int) $customerId, (int) $clothingTypeId, $fields ?? ['*']);
-        } catch (DecryptException $e) {
-            throw new \InvalidArgumentException("ID tidak valid.");
-        }
+        return $this->measurementHistoryRepository->getByCustomerAndClothingTypeUlid($customerUlid, $clothingTypeUlid);
     }
 
     public function create(array $data)
     {
-        try {
-            $customerId = (int) Crypt::decryptString($data['customer_id']);
-            $clothingTypeId = (int) Crypt::decryptString($data['clothing_type_id']);
-        } catch (DecryptException $e) {
-            throw new DecryptException("Item pakaian / penjahit / pelanggan tidak valid.");
-        }
-        $data['customer_id'] = $customerId;
-        $data['clothing_type_id'] = $clothingTypeId;
         return $this->measurementHistoryRepository->create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $ulid, array $data)
     {
-        return $this->measurementHistoryRepository->update($id, $data);
+        return $this->measurementHistoryRepository->update($ulid, $data);
     }
 
-    public function delete(string $hashedId)
+    public function delete(string $ulid)
     {
-        $decryptedId = Crypt::decryptString($hashedId);
-
-        return $this->measurementHistoryRepository->delete((int) $decryptedId);
+        return $this->measurementHistoryRepository->delete($ulid);
     }
 }
